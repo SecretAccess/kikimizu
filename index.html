@@ -394,8 +394,8 @@
             document.getElementById('dealer-water-img').src = getImageFile(dealerWater);
             document.getElementById('dealer-water-img').alt = dealerWater;
 
-            // 「次へ」ボタンを非表示にする（再度ステージAlphaで仮回答を行うため）
-            document.getElementById('next-beta').style.display = 'none';
+            // 「次へ」ボタンを表示
+            document.getElementById('next-beta').style.display = 'block';
         }
 
         // StageβからStageαへ移行
@@ -419,7 +419,7 @@
                 alphaSelection.appendChild(label);
             });
 
-            // 「次へ」ボタンを再度非表示にする
+            // 「次へ」ボタンを非表示にする
             document.getElementById('next-beta').style.display = 'none';
         }
 
@@ -433,8 +433,19 @@
             alphaError.textContent = '';
             const provisionalGuesses = Array.from(checkedBoxes).map(cb => cb.value);
             playerProvisionalGuesses.push(provisionalGuesses);
-            // 「次へ」ボタンを表示
-            document.getElementById('next-beta').style.display = 'block';
+            // 現在の杯をインクリメント
+            currentCup++;
+            if (currentCup > totalCups) {
+                // すべての杯が終わったらステージαを隠してステージ3を表示
+                stageAlpha.style.display = 'none';
+                stage3.style.display = 'block';
+                initializeFinalSelection();
+            } else {
+                // ステージαを隠してステージβを再表示
+                stageAlpha.style.display = 'none';
+                stageBeta.style.display = 'block';
+                initializeStageBeta();
+            }
         });
 
         // Stage3: プレイヤーの最終選択を初期化
