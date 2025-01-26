@@ -39,6 +39,7 @@
             align-items: center;
             width: 100px;
             cursor: pointer;
+            position: relative;
         }
 
         .water-grid img {
@@ -122,6 +123,7 @@
             justify-content: center;
             gap: 20px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .comparison div {
@@ -155,6 +157,31 @@
                 width: 60px;
                 height: 60px;
             }
+
+            .add-water-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .add-water-container input {
+                width: 80%;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* 追加ボタンのスタイル */
+        .add-water-button {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #20b2aa;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 18px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -178,11 +205,6 @@
                     <input type="checkbox" value="クリスタルガイザー">
                     <img src="crystal.png" alt="クリスタルガイザー">
                     クリスタルガイザー
-                </label>
-                <label>
-                    <input type="checkbox" value="ボルヴィック">
-                    <img src="boru.png" alt="ボルヴィック">
-                    ボルヴィック
                 </label>
                 <label>
                     <input type="checkbox" value="エビアン">
@@ -210,6 +232,7 @@
                     ウォーターサーバー
                 </label>
             </div>
+            <button id="add-water-button" class="add-water-button">✚</button>
             <button id="next-to-order">次へ</button>
             <p id="error-message" class="error"></p>
         </div>
@@ -406,7 +429,7 @@
             selectedWaters.forEach(water => {
                 const label = document.createElement('label');
                 label.innerHTML = `
-                    <input type="radio" name="final-choice" value="${water}">
+                    <input type="radio" name="final-choice-${currentCup}" value="${water}">
                     <img src="${getImageFile(water)}" alt="${water}">
                     ${water}
                 `;
@@ -418,10 +441,11 @@
 
         // ステージ3: プレイヤーが水を選択したときの処理
         document.getElementById('player-selection-final').addEventListener('change', (e) => {
-            if (e.target && e.target.name === 'final-choice') {
+            if (e.target && e.target.name.startsWith('final-choice-')) {
+                const cupIndex = parseInt(e.target.name.split('-')[2]) - 1;
                 const selectedWater = e.target.value;
                 // 現在の杯に選択を保存
-                playerFinalSelections[currentCup - 1] = selectedWater;
+                playerFinalSelections[cupIndex] = selectedWater;
             }
         });
 
@@ -485,7 +509,6 @@
                 case '天然水': return 'tennensui.png';
                 case 'いろはす': return 'irohasu.png';
                 case 'クリスタルガイザー': return 'crystal.png';
-                case 'ボルヴィック': return 'boru.png';
                 case 'エビアン': return 'ebian.png';
                 case '富士山水': return 'fujisansui.png';
                 case 'おいしい水': return 'oisiimizu.png';
@@ -493,6 +516,53 @@
                 case 'ウォーターサーバー': return 'server.png';
                 default: return 'placeholder.png';
             }
+        }
+
+        // 追加ボタンのイベントリスナー
+        document.getElementById('add-water-button').addEventListener('click', () => {
+            const waterName = prompt('新しい水の名前を入力してください:');
+            if (waterName === null || waterName.trim() === '') {
+                alert('水の名前が入力されませんでした。');
+                return;
+            }
+            const waterImage = prompt('水の画像URLを入力してください（任意）:');
+            addNewWater(waterName.trim(), waterImage ? waterImage.trim() : '');
+        });
+
+        // 新しい水を追加する関数
+        function addNewWater(name, imageUrl) {
+            const waterSelection = document.getElementById('water-selection');
+            const alphaSelection = document.getElementById('alpha-selection');
+            const playerSelectionFinal = document.getElementById('player-selection-final');
+
+            // 水の追加
+            const newLabel = document.createElement('label');
+            newLabel.innerHTML = `
+                <input type="checkbox" value="${name}">
+                <img src="${imageUrl !== '' ? imageUrl : 'placeholder.png'}" alt="${name}">
+                ${name}
+            `;
+            waterSelection.appendChild(newLabel);
+
+            // 仮回答の選択肢に追加
+            const newAlphaLabel = document.createElement('label');
+            newAlphaLabel.innerHTML = `
+                <input type="checkbox" name="alpha-choice" value="${name}">
+                <img src="${imageUrl !== '' ? imageUrl : 'placeholder.png'}" alt="${name}">
+                ${name}
+            `;
+            alphaSelection.appendChild(newAlphaLabel);
+
+            // プレイヤーの最終選択に追加
+            const newFinalLabel = document.createElement('label');
+            newFinalLabel.innerHTML = `
+                <input type="radio" name="final-choice-${currentCup}" value="${name}">
+                <img src="${imageUrl !== '' ? imageUrl : 'placeholder.png'}" alt="${name}">
+                ${name}
+            `;
+            playerSelectionFinal.appendChild(newFinalLabel);
+
+            alert(`${name} を追加しました。`);
         }
     </script>
 </body>
