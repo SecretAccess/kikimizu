@@ -110,6 +110,32 @@
             margin-top: 20px;
         }
 
+        .dealer-selection, .player-selection-final {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .comparison {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .comparison div {
+            text-align: center;
+        }
+
+        .comparison img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+
         /* レスポンシブデザイン */
         @media (max-width: 600px) {
             .water-grid label {
@@ -123,6 +149,11 @@
 
             button {
                 width: 80%;
+            }
+
+            .comparison img {
+                width: 60px;
+                height: 60px;
             }
         }
     </style>
@@ -149,6 +180,11 @@
                     クリスタルガイザー
                 </label>
                 <label>
+                    <input type="checkbox" value="ボルヴィック">
+                    <img src="boru.png" alt="ボルヴィック">
+                    ボルヴィック
+                </label>
+                <label>
                     <input type="checkbox" value="エビアン">
                     <img src="ebian.png" alt="エビアン">
                     エビアン
@@ -168,10 +204,10 @@
                     <img src="premiere.png" alt="アルカリ天然水">
                     アルカリ天然水(7＆iPB)
                 </label>
-              <label>
+                <label>
                     <input type="checkbox" value="ウォーターサーバー">
                     <img src="server.png" alt="ウォーターサーバー">
-                   ウォーターサーバー
+                    ウォーターサーバー
                 </label>
             </div>
             <button id="next-to-order">次へ</button>
@@ -187,19 +223,56 @@
             <button id="confirm-order">確認</button>
         </div>
 
-        <!-- ステージ3: プレイヤーの操作 -->
-        <div id="stage-3" class="stage">
-            <h2>プレイヤーが操作してください</h2>
-            <p id="cup-instruction">1杯目を選んでください</p>
-            <div id="player-selection" class="water-grid">
-                <!-- プレイヤーが選択する水がここに表示される -->
+        <!-- ステージα: 仮回答の選択 -->
+        <div id="stage-alpha" class="stage">
+            <h2>仮回答の選択</h2>
+            <p id="alpha-instruction">第<span id="current-cup-alpha">1</span>杯目の「正解に近いと思う水」を選択してください（複数選択可）</p>
+            <div id="alpha-selection" class="water-grid">
+                <!-- プレイヤーが仮回答を選択する水がここに表示される -->
             </div>
+            <button id="submit-alpha">送信</button>
+            <p id="alpha-error" class="error"></p>
+        </div>
+
+        <!-- ステージβ: ディーラーが提供する水の表示 -->
+        <div id="stage-beta" class="stage">
+            <h2>ディーラーが提供する水</h2>
+            <div class="dealer-selection">
+                <p>第<span id="current-cup-beta">1</span>杯目は <strong id="dealer-water-name"></strong> です。</p>
+                <img id="dealer-water-img" src="" alt="" style="width:80px;height:80px;">
+            </div>
+            <button id="next-beta">次へ</button>
+        </div>
+
+        <!-- ステージ3: プレイヤーの最終選択 -->
+        <div id="stage-3" class="stage">
+            <h2>プレイヤーの最終選択</h2>
+            <p>提供順に水を選択してください。選択後に選び直しが可能です。</p>
+            <div id="player-selection-final" class="water-grid">
+                <!-- プレイヤーが最終選択する水がここに表示される -->
+            </div>
+            <button id="confirm-final">確認</button>
+            <p id="final-error" class="error"></p>
         </div>
 
         <!-- ステージ4: 結果表示 -->
         <div id="stage-4" class="stage">
             <h2>結果</h2>
             <p id="result-message"></p>
+            <div class="comparison">
+                <div>
+                    <h3>ディーラーの選択</h3>
+                    <div id="dealer-results">
+                        <!-- ディーラーの選択を表示 -->
+                    </div>
+                </div>
+                <div>
+                    <h3>プレイヤーの選択</h3>
+                    <div id="player-results">
+                        <!-- プレイヤーの選択を表示 -->
+                    </div>
+                </div>
+            </div>
             <button onclick="location.reload()">リセット</button>
         </div>
     </div>
@@ -209,20 +282,27 @@
 
         let selectedWaters = [];
         let dealerOrder = [];
-        let playerGuesses = [];
+        let playerProvisionalGuesses = [];
+        let dealerActualSelections = [];
+        let playerFinalSelections = [];
         let correctCount = 0;
         let currentCup = 1;
+        let totalCups = 0;
 
         // ステージの要素を取得
         const stage1 = document.getElementById('stage-1');
         const stage2 = document.getElementById('stage-2');
+        const stageAlpha = document.getElementById('stage-alpha');
+        const stageBeta = document.getElementById('stage-beta');
         const stage3 = document.getElementById('stage-3');
         const stage4 = document.getElementById('stage-4');
 
-        // エラー表示
+        // エラー表示要素
         const errorMessage = document.getElementById('error-message');
+        const alphaError = document.getElementById('alpha-error');
+        const finalError = document.getElementById('final-error');
 
-        // 次へボタンのイベントリスナー
+        // 次へボタンのイベントリスナー（ステージ1からステージ2へ）
         document.getElementById('next-to-order').addEventListener('click', () => {
             // 選択された水を取得
             const checkboxes = document.querySelectorAll('#water-selection input[type="checkbox"]:checked');
@@ -232,13 +312,14 @@
             }
             errorMessage.textContent = '';
             selectedWaters = Array.from(checkboxes).map(cb => cb.value);
+            totalCups = selectedWaters.length;
             // ステージ1を隠してステージ2を表示
             stage1.style.display = 'none';
             stage2.style.display = 'block';
             initializeOrderList();
         });
 
-        // 順序入れ替えリストの初期化
+        // 順序入れ替えリストの初期化（ステージ2）
         function initializeOrderList() {
             const orderList = document.getElementById('order-list');
             orderList.innerHTML = '';
@@ -254,72 +335,148 @@
             });
         }
 
-        // 確認ボタンのイベントリスナー
+        // 確認ボタンのイベントリスナー（ステージ2からステージαへ）
         document.getElementById('confirm-order').addEventListener('click', () => {
             const orderItems = document.querySelectorAll('#order-list li');
             dealerOrder = Array.from(orderItems).map(item => item.getAttribute('data-value'));
-            // ステージ2を隠してステージ3を表示
+            // ステージ2を隠してステージαを表示
             stage2.style.display = 'none';
-            stage3.style.display = 'block';
-            initializePlayerSelection();
+            stageAlpha.style.display = 'block';
+            initializeAlphaSelection();
         });
 
-        // プレイヤー選択の初期化
-        function initializePlayerSelection() {
-            const playerSelection = document.getElementById('player-selection');
-            playerSelection.innerHTML = '';
+        // Stageα: 仮回答の選択を初期化
+        function initializeAlphaSelection() {
+            const alphaSelection = document.getElementById('alpha-selection');
+            alphaSelection.innerHTML = '';
             selectedWaters.forEach(water => {
                 const label = document.createElement('label');
                 label.innerHTML = `
-                    <input type="radio" name="player-choice" value="${water}">
+                    <input type="checkbox" name="alpha-choice" value="${water}">
                     <img src="${getImageFile(water)}" alt="${water}">
                     ${water}
                 `;
-                playerSelection.appendChild(label);
+                alphaSelection.appendChild(label);
             });
         }
 
-        // プレイヤーが水を選択したときの処理
-        document.getElementById('player-selection').addEventListener('change', (e) => {
-            if (e.target && e.target.name === 'player-choice') {
-                const selectedWater = e.target.value;
-                playerGuesses.push(selectedWater);
-                // ディーラーが実際に提供する水を表示
-                showDealerChoice(currentCup, dealerOrder[currentCup - 1]);
-                currentCup++;
-                // 次の杯へ
-                if (currentCup > dealerOrder.length) {
-                    // ゲーム終了
-                    showResults();
-                } else {
-                    document.getElementById('cup-instruction').textContent = `${currentCup}杯目を選んでください`;
-                    // 選択をリセット
-                    document.querySelectorAll('input[name="player-choice"]').forEach(cb => cb.checked = false);
-                }
+        // Stageα: 送信ボタンのイベントリスナー
+        document.getElementById('submit-alpha').addEventListener('click', () => {
+            const checkedBoxes = document.querySelectorAll('#alpha-selection input[type="checkbox"]:checked');
+            if (checkedBoxes.length === 0) {
+                alphaError.textContent = '少なくとも1つの水を選択してください。';
+                return;
+            }
+            alphaError.textContent = '';
+            const provisionalGuesses = Array.from(checkedBoxes).map(cb => cb.value);
+            playerProvisionalGuesses.push(provisionalGuesses);
+            // ディーラーの選択を表示（ステージβへ）
+            const dealerWater = dealerOrder[currentCup - 1];
+            dealerActualSelections.push(dealerWater);
+            document.getElementById('current-cup-beta').textContent = currentCup;
+            document.getElementById('dealer-water-name').textContent = dealerWater;
+            document.getElementById('dealer-water-img').src = getImageFile(dealerWater);
+            document.getElementById('dealer-water-img').alt = dealerWater;
+            stageAlpha.style.display = 'none';
+            stageBeta.style.display = 'block';
+        });
+
+        // Stageβ: 次へボタンのイベントリスナー
+        document.getElementById('next-beta').addEventListener('click', () => {
+            // 次の杯へ
+            currentCup++;
+            if (currentCup > totalCups) {
+                // すべての杯が終わったらステージβを隠してステージ3を表示
+                stageBeta.style.display = 'none';
+                stage3.style.display = 'block';
+                initializeFinalSelection();
+            } else {
+                // ステージβを隠してステージαを再表示
+                stageBeta.style.display = 'none';
+                stageAlpha.style.display = 'block';
+                document.getElementById('current-cup-alpha').textContent = currentCup;
+                initializeAlphaSelection();
             }
         });
 
-        // ディーラーの選択を表示
-        function showDealerChoice(cupNumber, water) {
-            // 画像と名前を表示する要素を動的に作成
-            const instruction = document.getElementById('cup-instruction');
-            const dealerInfo = document.createElement('div');
-            dealerInfo.style.marginTop = '10px';
-            dealerInfo.innerHTML = `
-                <p>${cupNumber}杯目は <strong>${water}</strong> です。</p>
-                <img src="${getImageFile(water)}" alt="${water}" style="width:60px;height:60px;">
-            `;
-            instruction.parentNode.insertBefore(dealerInfo, instruction.nextSibling);
+        // ステージ3: プレイヤーの最終選択を初期化
+        function initializeFinalSelection() {
+            const playerSelectionFinal = document.getElementById('player-selection-final');
+            playerSelectionFinal.innerHTML = '';
+            selectedWaters.forEach(water => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="radio" name="final-choice" value="${water}">
+                    <img src="${getImageFile(water)}" alt="${water}">
+                    ${water}
+                `;
+                playerSelectionFinal.appendChild(label);
+            });
+            playerFinalSelections = Array(totalCups).fill(null);
+            alert('プレイヤーは提供順に水を選択してください。選択後に選び直しが可能です。');
         }
 
-        // 結果を表示
-        function showResults() {
+        // ステージ3: プレイヤーが水を選択したときの処理
+        document.getElementById('player-selection-final').addEventListener('change', (e) => {
+            if (e.target && e.target.name === 'final-choice') {
+                const selectedWater = e.target.value;
+                // 現在の杯に選択を保存
+                playerFinalSelections[currentCup - 1] = selectedWater;
+            }
+        });
+
+        // ステージ3: 確認ボタンのイベントリスナー
+        document.getElementById('confirm-final').addEventListener('click', () => {
+            // 全杯分が選択されているか確認
+            const missingSelections = playerFinalSelections.filter(selection => selection === null);
+            if (missingSelections.length > 0) {
+                finalError.textContent = '全ての杯について水を選択してください。';
+                return;
+            }
+            finalError.textContent = '';
+            // ステージ3を隠してステージ4を表示
             stage3.style.display = 'none';
             stage4.style.display = 'block';
+            showResults();
+        });
+
+        // 結果を表示（ステージ4）
+        function showResults() {
             // 正解数を計算
-            correctCount = playerGuesses.filter((guess, index) => guess === dealerOrder[index]).length;
-            const accuracy = ((correctCount / dealerOrder.length) * 100).toFixed(2);
+            correctCount = 0;
+            for (let i = 0; i < totalCups; i++) {
+                if (playerFinalSelections[i] === dealerOrder[i]) {
+                    correctCount++;
+                }
+            }
+            const accuracy = ((correctCount / totalCups) * 100).toFixed(2);
             document.getElementById('result-message').textContent = `${correctCount}問正解　正解率 ${accuracy}%`;
+
+            // ディーラーの選択を表示
+            const dealerResults = document.getElementById('dealer-results');
+            dealerResults.innerHTML = '';
+            dealerOrder.forEach((water, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <p>第${index + 1}杯目</p>
+                    <img src="${getImageFile(water)}" alt="${water}">
+                    <p>${water}</p>
+                `;
+                dealerResults.appendChild(div);
+            });
+
+            // プレイヤーの選択を表示
+            const playerResults = document.getElementById('player-results');
+            playerResults.innerHTML = '';
+            playerFinalSelections.forEach((water, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <p>第${index + 1}杯目</p>
+                    <img src="${getImageFile(water)}" alt="${water}">
+                    <p>${water}</p>
+                `;
+                playerResults.appendChild(div);
+            });
         }
 
         // 画像ファイルを取得
@@ -328,11 +485,12 @@
                 case '天然水': return 'tennensui.png';
                 case 'いろはす': return 'irohasu.png';
                 case 'クリスタルガイザー': return 'crystal.png';
+                case 'ボルヴィック': return 'boru.png';
                 case 'エビアン': return 'ebian.png';
                 case '富士山水': return 'fujisansui.png';
                 case 'おいしい水': return 'oisiimizu.png';
                 case 'アルカリ天然水': return 'premiere.png';
-                 case 'ウォーターサーバー': return 'server.png';
+                case 'ウォーターサーバー': return 'server.png';
                 default: return 'placeholder.png';
             }
         }
