@@ -83,13 +83,13 @@
             margin-top: 10px;
         }
 
-        #order-list {
+        #order-list, #final-order-list {
             list-style-type: none;
             padding: 0;
             margin-top: 20px;
         }
 
-        #order-list li {
+        #order-list li, #final-order-list li {
             padding: 10px;
             margin: 5px 0;
             background-color: #e0ffff;
@@ -101,7 +101,7 @@
             justify-content: center;
         }
 
-        #order-list li img {
+        #order-list li img, #final-order-list li img {
             width: 50px;
             height: 50px;
             margin-right: 10px;
@@ -187,28 +187,8 @@
         }
 
         /* ステージ3の最終選択用スタイル */
-        #final-order-list {
-            list-style-type: none;
-            padding: 0;
-            margin-top: 20px;
-        }
-
         #final-order-list li {
-            padding: 10px;
-            margin: 5px 0;
             background-color: #e6ffe6;
-            border: 1px solid #00ced1;
-            border-radius: 5px;
-            cursor: move;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #final-order-list li img {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
         }
     </style>
 </head>
@@ -282,7 +262,7 @@
                 <p>第<span id="current-cup-beta">1</span>杯目は <strong id="dealer-water-name"></strong> です。</p>
                 <img id="dealer-water-img" src="" alt="" style="width:80px;height:80px;">
             </div>
-            <button id="next-beta">次へ</button>
+            <button id="next-beta" style="display: none;">次へ</button>
         </div>
 
         <!-- ステージα: 仮回答の選択 -->
@@ -413,6 +393,9 @@
             document.getElementById('dealer-water-name').textContent = dealerWater;
             document.getElementById('dealer-water-img').src = getImageFile(dealerWater);
             document.getElementById('dealer-water-img').alt = dealerWater;
+
+            // 「次へ」ボタンを非表示にする（再度ステージAlphaで仮回答を行うため）
+            document.getElementById('next-beta').style.display = 'none';
         }
 
         // StageβからStageαへ移行
@@ -435,6 +418,9 @@
                 `;
                 alphaSelection.appendChild(label);
             });
+
+            // 「次へ」ボタンを再度非表示にする
+            document.getElementById('next-beta').style.display = 'none';
         }
 
         // Stageα: 送信ボタンのイベントリスナー
@@ -447,10 +433,8 @@
             alphaError.textContent = '';
             const provisionalGuesses = Array.from(checkedBoxes).map(cb => cb.value);
             playerProvisionalGuesses.push(provisionalGuesses);
-            // 次の杯へ進むボタンを表示
+            // 「次へ」ボタンを表示
             document.getElementById('next-beta').style.display = 'block';
-            // 仮回答の参考資料を保存（必要に応じて）
-            // ここではプレイヤーの仮回答を表示する際に利用
         });
 
         // Stage3: プレイヤーの最終選択を初期化
