@@ -6,18 +6,26 @@
     <title>利き水チャレンジ</title>
     <!-- Sortable.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <!-- Google Fonts -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #2196F3;
             --primary-light: #BBDEFB;
             --primary-dark: #1976D2;
+            --primary-lightest: #E3F2FD;
             --accent-color: #00BCD4;
+            --success-color: #4CAF50;
+            --warning-color: #FFC107;
+            --error-color: #F44336;
             --text-color: #333;
             --light-text: #757575;
             --light-bg: #F5F9FF;
             --card-bg: #FFFFFF;
+            --dealer-color: #9C27B0;
+            --dealer-light: #E1BEE7;
+            --player-color: #00BCD4;
+            --player-light: #B2EBF2;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             --border-radius: 12px;
         }
@@ -26,6 +34,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            transition: all 0.2s ease;
         }
 
         body {
@@ -38,21 +47,137 @@
             line-height: 1.6;
         }
 
-        #game-container {
-            max-width: 900px;
+        #app-container {
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
             position: relative;
         }
 
-        .stage {
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .dealer-mode-label {
+            background-color: var(--dealer-light);
+            color: var(--dealer-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
             display: none;
+        }
+
+        .player-mode-label {
+            background-color: var(--player-light);
+            color: var(--player-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .mode-button {
+            padding: 15px 30px;
+            margin: 0 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dealer-button {
+            background-color: var(--dealer-light);
+            color: var(--dealer-color);
+        }
+
+        .dealer-button:hover {
+            background-color: var(--dealer-color);
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        .player-button {
+            background-color: var(--player-light);
+            color: var(--player-color);
+        }
+
+        .player-button:hover {
+            background-color: var(--player-color);
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        .card {
             background-color: var(--card-bg);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             padding: 30px;
-            margin-top: 20px;
+            margin-bottom: 20px;
             transition: all 0.3s ease-in-out;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 20px;
+        }
+
+        .dealer-card .card-title {
+            color: var(--dealer-color);
+        }
+
+        .player-card .card-title {
+            color: var(--player-color);
+        }
+
+        .card-content {
+            margin-bottom: 20px;
+        }
+
+        .stage {
+            display: none;
         }
 
         h2 {
@@ -61,12 +186,17 @@
             font-weight: 600;
         }
 
+        p {
+            margin-bottom: 15px;
+            color: var(--light-text);
+        }
+
         .water-grid {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 15px;
-            margin-top: 20px;
+            margin: 20px 0;
         }
 
         .water-grid label {
@@ -123,7 +253,7 @@
         }
 
         .btn {
-            margin-top: 25px;
+            margin: 10px 5px;
             padding: 12px 24px;
             font-size: 16px;
             background-color: var(--primary-color);
@@ -154,9 +284,60 @@
             box-shadow: 0 2px 3px rgba(0,0,0,0.1);
         }
 
+        .btn-dealer {
+            background-color: var(--dealer-color);
+        }
+
+        .btn-dealer:hover {
+            background-color: #7B1FA2;
+        }
+
+        .btn-player {
+            background-color: var(--player-color);
+        }
+
+        .btn-player:hover {
+            background-color: #0097A7;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #388E3C;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--text-color);
+        }
+
+        .btn-warning:hover {
+            background-color: #FFA000;
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #D32F2F;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-light);
+        }
+
         .error {
-            color: #f44336;
-            margin-top: 15px;
+            color: var(--error-color);
+            margin: 15px 0;
             font-size: 14px;
             background-color: rgba(244, 67, 54, 0.1);
             padding: 8px 12px;
@@ -167,11 +348,9 @@
         .sortable-list {
             list-style-type: none;
             padding: 0;
-            margin-top: 25px;
+            margin: 25px auto;
             width: 100%;
             max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .sortable-list li {
@@ -183,14 +362,14 @@
             cursor: move;
             display: flex;
             align-items: center;
-            box-shadow: var(--shadow);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: all 0.2s ease;
         }
 
         .sortable-list li:hover {
             background-color: #f9f9f9;
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         }
 
         .sortable-list li img {
@@ -207,40 +386,41 @@
             cursor: move;
         }
 
-        #result-message {
-            font-size: 20px;
-            margin-top: 25px;
-            font-weight: 600;
-            color: var(--primary-dark);
-            padding: 15px;
-            background-color: var(--primary-light);
-            border-radius: 8px;
-            display: inline-block;
-        }
-
-        .dealer-selection, .player-selection-final {
+        .cup-display {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 25px;
+            margin: 30px 0;
             padding: 20px;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: var(--primary-lightest);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
         }
 
-        .dealer-selection p {
-            font-size: 18px;
-            margin-bottom: 15px;
+        .cup-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
         }
 
-        .dealer-selection img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--primary-light);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .cup-label {
+            font-size: 18px;
+            color: var(--light-text);
+        }
+
+        .dealer-note {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--dealer-light);
+            border-radius: 8px;
+            text-align: left;
+            font-size: 15px;
+            color: var(--dealer-color);
+        }
+
+        .dealer-note i {
+            margin-right: 8px;
         }
 
         .comparison {
@@ -267,6 +447,16 @@
             border-bottom: 2px solid var(--primary-light);
         }
 
+        .dealer-column h3 {
+            color: var(--dealer-color);
+            border-bottom-color: var(--dealer-light);
+        }
+
+        .player-column h3 {
+            color: var(--player-color);
+            border-bottom-color: var(--player-light);
+        }
+
         .comparison-item {
             display: flex;
             align-items: center;
@@ -278,12 +468,12 @@
 
         .comparison-item.correct {
             background-color: rgba(76, 175, 80, 0.1);
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid var(--success-color);
         }
 
         .comparison-item.incorrect {
             background-color: rgba(244, 67, 54, 0.1);
-            border-left: 4px solid #F44336;
+            border-left: 4px solid var(--error-color);
         }
 
         .comparison-item img {
@@ -298,7 +488,7 @@
             text-align: left;
         }
 
-        .cup-number {
+        .cup-number-small {
             font-weight: bold;
             font-size: 14px;
             color: var(--light-text);
@@ -307,6 +497,31 @@
         .water-title {
             font-weight: 500;
             font-size: 16px;
+        }
+
+        #result-message {
+            font-size: 20px;
+            margin: 25px 0;
+            font-weight: 600;
+            color: var(--primary-dark);
+            padding: 15px;
+            background-color: var(--primary-light);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        /* プレイヤー選択画面 */
+        .tasting-section {
+            padding: 20px;
+            margin: 20px 0;
+            background-color: var(--player-light);
+            border-radius: var(--border-radius);
+        }
+
+        .tasting-section h3 {
+            color: var(--player-color);
+            margin-bottom: 15px;
+            font-weight: 500;
         }
 
         /* 追加ボタンスタイル */
@@ -334,12 +549,6 @@
             background-color: #00ACC1;
             transform: scale(1.1);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        /* ステージβの「次へ」ボタンのスタイル */
-        #next-beta {
-            margin: 25px auto;
-            display: none;
         }
 
         /* 画像アップロード用のモーダル */
@@ -387,7 +596,8 @@
             color: var(--text-color);
         }
 
-        .form-group input[type="text"] {
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
             width: 100%;
             padding: 12px;
             border: 1px solid #e0e0e0;
@@ -396,7 +606,8 @@
             transition: border 0.3s ease;
         }
 
-        .form-group input[type="text"]:focus {
+        .form-group input[type="text"]:focus,
+        .form-group input[type="password"]:focus {
             border-color: var(--primary-color);
             outline: none;
             box-shadow: 0 0 0 3px var(--primary-light);
@@ -465,150 +676,191 @@
             gap: 15px;
         }
 
-        .btn-secondary {
-            background-color: #e0e0e0;
-            color: var(--text-color);
+        .test-config-details {
+            background-color: var(--primary-lightest);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
         }
 
-        .btn-secondary:hover {
-            background-color: #d5d5d5;
+        .test-config-details h3 {
+            font-size: 18px;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
         }
 
-        /* 仮回答表示のスタイル */
-        #provisional-display {
-            margin: 25px 0;
-            padding: 20px;
-            background-color: rgba(255, 255, 255, 0.8);
+        .config-list {
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+
+        .config-list li {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .config-list li:last-child {
+            border-bottom: none;
+        }
+
+        .config-list li img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            object-fit: cover;
+        }
+
+        /* セキュリティロック用のスタイル */
+        .lock-screen {
+            background-color: var(--primary-lightest);
             border-radius: var(--border-radius);
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 500px;
+            text-align: center;
             box-shadow: var(--shadow);
         }
 
-        #provisional-display h3 {
+        .lock-icon {
+            font-size: 64px;
             color: var(--primary-dark);
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--primary-light);
+            margin-bottom: 20px;
         }
 
-        #provisional-display p {
-            margin: 8px 0;
-            padding: 10px;
-            background-color: #f9f9f9;
+        .lock-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+        }
+
+        .lock-description {
+            color: var(--light-text);
+            margin-bottom: 25px;
+        }
+
+        .password-input {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto 20px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .password-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background-color: rgba(76, 175, 80, 0.9);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .accordion {
+            margin: 20px 0;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .accordion-header {
+            padding: 15px;
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .accordion-header:hover {
+            background-color: var(--primary-lightest);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background-color: white;
+            padding: 0 15px;
+        }
+
+        .accordion-content.show {
+            max-height: 500px;
+            padding: 15px;
+        }
+
+        .printed-instructions {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border: 1px dashed #ccc;
             border-radius: 8px;
             text-align: left;
         }
 
-        /* Loading Animation */
-        .loader {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 1999;
-            justify-content: center;
-            align-items: center;
+        .printed-instructions h3 {
+            margin-bottom: 15px;
+            color: var(--primary-dark);
         }
 
-        .loader-inner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid var(--primary-light);
-            border-radius: 50%;
-            border-top-color: var(--primary-color);
-            animation: spin 1s infinite linear;
+        .printed-instructions ol {
+            margin-left: 20px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 進行状況バー */
-        .progress-container {
-            margin-bottom: 30px;
-            width: 100%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
+        .printed-instructions li {
             margin-bottom: 10px;
         }
 
-        .progress-step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            position: relative;
+        .printed-instructions .water-list {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
         }
 
-        .step-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #e0e0e0;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .session-id {
             font-size: 14px;
-            margin-bottom: 8px;
-            z-index: 2;
-            transition: all 0.3s ease;
-        }
-
-        .step-label {
-            font-size: 12px;
-            color: var(--light-text);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .progress-step.active .step-icon {
-            background-color: var(--primary-color);
-            box-shadow: 0 0 0 4px var(--primary-light);
-        }
-
-        .progress-step.active .step-label {
-            color: var(--primary-dark);
-            font-weight: 500;
-        }
-
-        .progress-step.completed .step-icon {
-            background-color: #4CAF50;
-        }
-
-        .progress-bar {
-            height: 4px;
-            background-color: #e0e0e0;
-            position: relative;
-            margin-top: 15px;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-bar-inner {
-            position: absolute;
-            height: 100%;
-            background-color: var(--primary-color);
-            width: 0%;
-            transition: width 0.4s ease;
+            background-color: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0 5px;
         }
 
         /* レスポンシブデザイン */
         @media (max-width: 768px) {
-            #game-container {
+            #app-container {
                 padding: 15px;
             }
 
-            .stage {
+            .card {
                 padding: 20px;
             }
 
@@ -622,17 +874,8 @@
             }
 
             .btn {
-                padding: 10px 20px;
-                font-size: 14px;
-                width: 80%;
-            }
-
-            .add-water-button {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
-                bottom: 20px;
-                right: 20px;
+                width: 100%;
+                margin-bottom: 10px;
             }
 
             .comparison {
@@ -643,11 +886,20 @@
             .comparison-column {
                 width: 100%;
             }
+
+            .mode-selector {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .mode-button {
+                margin: 0;
+            }
         }
 
         @media (max-width: 480px) {
             .water-grid {
-                justify-content: space-around;
+                gap: 10px;
             }
 
             .water-grid label {
@@ -663,190 +915,334 @@
                 font-size: 12px;
             }
 
-            .progress-steps {
-                display: none;
+            .cup-number {
+                font-size: 36px;
             }
 
-            .step-label {
-                display: none;
-            }
-
-            .dealer-selection img {
-                width: 80px;
-                height: 80px;
+            .cup-label {
+                font-size: 16px;
             }
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <!-- 進行状況バー -->
-        <div class="progress-container">
-            <div class="progress-steps">
-                <div class="progress-step active" data-step="1">
-                    <div class="step-icon">1</div>
-                    <div class="step-label">水の選択</div>
-                </div>
-                <div class="progress-step" data-step="2">
-                    <div class="step-icon">2</div>
-                    <div class="step-label">順番の設定</div>
-                </div>
-                <div class="progress-step" data-step="3">
-                    <div class="step-icon">3</div>
-                    <div class="step-label">テイスティング</div>
-                </div>
-                <div class="progress-step" data-step="4">
-                    <div class="step-icon">4</div>
-                    <div class="step-label">仮回答</div>
-                </div>
-                <div class="progress-step" data-step="5">
-                    <div class="step-icon">5</div>
-                    <div class="step-label">最終回答</div>
-                </div>
-                <div class="progress-step" data-step="6">
-                    <div class="step-icon">6</div>
-                    <div class="step-label">結果</div>
-                </div>
+    <div id="app-container">
+        <!-- ヘッダー -->
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-glass-water logo-icon"></i>
+                <div class="logo-text">利き水チャレンジ</div>
             </div>
-            <div class="progress-bar">
-                <div class="progress-bar-inner" style="width: 16.6%;"></div>
+            <div class="mode-indicators">
+                <div id="dealer-mode-label" class="dealer-mode-label">
+                    <i class="fas fa-user-tie"></i> ディーラーモード
+                </div>
+                <div id="player-mode-label" class="player-mode-label">
+                    <i class="fas fa-user"></i> プレイヤーモード
+                </div>
             </div>
         </div>
 
-        <!-- ステージ1: 水の選択 -->
-        <div id="stage-1" class="stage" style="display:block;">
-            <h2>水の種類を選択してください</h2>
-            <p>利き水チャレンジに使用する水を2つ以上選択してください</p>
-            <div id="water-selection" class="water-grid">
-                <label>
-                    <input type="checkbox" value="天然水">
-                    <div class="water-img-container">
-                        <img src="tennensui.png" alt="天然水">
-                    </div>
-                    <div class="water-name">天然水</div>
-                </label>
-                <label>
-                    <input type="checkbox" value="いろはす">
-                    <div class="water-img-container">
-                        <img src="irohasu.png" alt="いろはす">
-                    </div>
-                    <div class="water-name">いろはす</div>
-                </label>
-                <label>
-                    <input type="checkbox" value="クリスタルガイザー">
-                    <div class="water-img-container">
-                        <img src="crystal.png" alt="クリスタルガイザー">
-                    </div>
-                    <div class="water-name">クリスタルガイザー</div>
-                </label>
-                <label>
-                    <input type="checkbox" value="エビアン">
-                    <div class="water-img-container">
-                        <img src="ebian.png" alt="エビアン">
-                    </div>
-                    <div class="water-name">エビアン</div>
-                </label>
-                <label>
-                    <input type="checkbox" value="富士山水">
-                    <div class="water-img-container">
-                        <img src="fujisansui.png" alt="富士山水">
-                    </div>
-                    <div class="water-name">富士山水</div>
-                </label>
-                <label>
-                    <input type="checkbox" value="おいしい水">
-                    <div class="water-img-container">
-                        <img src="oisiimizu.png" alt="おいしい水">
-                    </div>
-                    <div class="water-name">おいしい水</div>
-                </label>
-                <label>
-                    <input type="checkbox" value="アルカリ天然水">
-                    <div class="water-img-container">
-                        <img src="premiere.png" alt="アルカリ天然水">
-                    </div>
-                    <div class="water-name">アルカリ天然水</div>
-                </label>
-                <label>
-                    <input type="checkbox" value="ウォーターサーバー">
-                    <div class="water-img-container">
-                        <img src="server.png" alt="ウォーターサーバー">
-                    </div>
-                    <div class="water-name">ウォーターサーバー</div>
-                </label>
-            </div>
-            <button id="next-to-order" class="btn"><i class="fas fa-arrow-right"></i>次へ進む</button>
-            <div id="error-message" class="error"></div>
-        </div>
-
-        <!-- ステージ2: 提供順序の入れ替え -->
-        <div id="stage-2" class="stage">
-            <h2>提供する順番に並び替えてください</h2>
-            <p>各アイテムをドラッグして順番を入れ替えることができます</p>
-            <ul id="order-list" class="sortable-list">
-                <!-- 選択した水がここに表示される -->
-            </ul>
-            <button id="confirm-order" class="btn"><i class="fas fa-check"></i>この順番で確定</button>
-        </div>
-
-        <!-- ステージβ: ディーラーが提供する水の表示 -->
-        <div id="stage-beta" class="stage">
-            <h2>ディーラーが提供する水</h2>
-            <div class="dealer-selection">
-                <p>第<span id="current-cup-beta">1</span>杯目は <strong id="dealer-water-name"></strong> です。</p>
-                <img id="dealer-water-img" src="" alt="">
-            </div>
-            <button id="next-beta" class="btn"><i class="fas fa-forward"></i>次へ進む</button>
-        </div>
-
-        <!-- ステージα: 仮回答の選択 -->
-        <div id="stage-alpha" class="stage">
-            <h2>仮回答の選択</h2>
-            <p id="alpha-instruction">第<span id="current-cup-alpha">1</span>杯目の「正解に近いと思う水」を選択してください（複数選択可）</p>
-            <div id="alpha-selection" class="water-grid">
-                <!-- プレイヤーが仮回答を選択する水がここに表示される -->
-            </div>
-            <button id="submit-alpha" class="btn"><i class="fas fa-paper-plane"></i>仮回答を送信</button>
-            <div id="alpha-error" class="error"></div>
-        </div>
-
-        <!-- ステージ3: プレイヤーの最終選択 -->
-        <div id="stage-3" class="stage">
-            <h2>最終選択</h2>
-            <p>各杯で提供された水の種類を、あなたが思う順番に並び替えてください。</p>
-            <div id="provisional-display">
-                <!-- 仮回答の参考資料がここに表示される -->
-            </div>
-            <ul id="final-order-list" class="sortable-list">
-                <!-- プレイヤーが最終選択する水がここに表示される -->
-            </ul>
-            <button id="confirm-final" class="btn"><i class="fas fa-flag-checkered"></i>最終回答を確定</button>
-            <div id="final-error" class="error"></div>
-        </div>
-
-        <!-- ステージ4: 結果表示 -->
-        <div id="stage-4" class="stage">
-            <h2>結果発表</h2>
-            <div id="result-message"></div>
-            <div class="comparison">
-                <div class="comparison-column">
-                    <h3>ディーラーの選択</h3>
-                    <div id="dealer-results">
-                        <!-- ディーラーの選択を表示 -->
-                    </div>
+        <!-- ホーム画面 -->
+        <div id="home-screen" class="stage" style="display:block;">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-home"></i> 利き水チャレンジへようこそ
                 </div>
-                <div class="comparison-column">
-                    <h3>プレイヤーの選択</h3>
-                    <div id="player-results">
-                        <!-- プレイヤーの選択を表示 -->
-                    </div>
+                <div class="card-content">
+                    <p>このアプリでは、友人や家族と一緒に異なる水の味を当てるゲームを楽しむことができます。</p>
+                    <p>始めるには、役割を選択してください。</p>
+                </div>
+                <div class="mode-selector">
+                    <button id="dealer-button" class="mode-button dealer-button">
+                        <i class="fas fa-user-tie"></i> ディーラー（出題者）
+                    </button>
+                    <button id="player-button" class="mode-button player-button">
+                        <i class="fas fa-user"></i> プレイヤー（回答者）
+                    </button>
                 </div>
             </div>
-            <button onclick="location.reload()" class="btn"><i class="fas fa-redo"></i>もう一度チャレンジ</button>
+
+            <!-- 遊び方の説明 -->
+            <div class="accordion">
+                <div class="accordion-header">
+                    <span>遊び方を見る</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="accordion-content">
+                    <h3>利き水チャレンジの遊び方</h3>
+                    <p>このゲームは出題者（ディーラー）と回答者（プレイヤー）に分かれて行います。</p>
+                    
+                    <h4>ディーラーの役割</h4>
+                    <ol>
+                        <li>テストに使用する複数の水を選択します</li>
+                        <li>水を提供する順番を決めます</li>
+                        <li>セッションIDを生成して、プレイヤーに伝えます</li>
+                        <li>決めた順番で実際に水をプレイヤーに提供します</li>
+                    </ol>
+                    
+                    <h4>プレイヤーの役割</h4>
+                    <ol>
+                        <li>セッションIDを入力してゲームに参加します</li>
+                        <li>ディーラーから水を一杯ずつ受け取り、味わいます</li>
+                        <li>各杯ごとに「この水は何か」という仮回答を記録します</li>
+                        <li>すべての水を試飲した後、最終回答を提出します</li>
+                    </ol>
+                    
+                    <p>最終的に、プレイヤーの回答とディーラーの出題を照合し、正解数を確認します。</p>
+                </div>
+            </div>
         </div>
 
-        <!-- 追加ボタン -->
-        <button id="add-water-button" class="add-water-button">
+        <!-- ディーラーモード -->
+        <div id="dealer-section" class="stage">
+            <!-- ディーラーステージ1: 水の選択 -->
+            <div id="dealer-stage-1" class="card dealer-card">
+                <div class="card-title">
+                    <i class="fas fa-tint"></i> 水の種類を選択
+                </div>
+                <div class="card-content">
+                    <p>テストに使用する水を2つ以上選択してください。</p>
+                    <div id="water-selection" class="water-grid">
+                        <label>
+                            <input type="checkbox" value="天然水">
+                            <div class="water-img-container">
+                                <img src="tennensui.png" alt="天然水">
+                            </div>
+                            <div class="water-name">天然水</div>
+                        </label>
+                        <label>
+                            <input type="checkbox" value="いろはす">
+                            <div class="water-img-container">
+                                <img src="irohasu.png" alt="いろはす">
+                            </div>
+                            <div class="water-name">いろはす</div>
+                        </label>
+                        <label>
+                            <input type="checkbox" value="クリスタルガイザー">
+                            <div class="water-img-container">
+                                <img src="crystal.png" alt="クリスタルガイザー">
+                            </div>
+                            <div class="water-name">クリスタルガイザー</div>
+                        </label>
+                        <label>
+                            <input type="checkbox" value="エビアン">
+                            <div class="water-img-container">
+                                <img src="ebian.png" alt="エビアン">
+                            </div>
+                            <div class="water-name">エビアン</div>
+                        </label>
+                        <label>
+                            <input type="checkbox" value="富士山水">
+                            <div class="water-img-container">
+                                <img src="fujisansui.png" alt="富士山水">
+                            </div>
+                            <div class="water-name">富士山水</div>
+                        </label>
+                        <label>
+                            <input type="checkbox" value="おいしい水">
+                            <div class="water-img-container">
+                                <img src="oisiimizu.png" alt="おいしい水">
+                            </div>
+                            <div class="water-name">おいしい水</div>
+                        </label>
+                        <label>
+                            <input type="checkbox" value="アルカリ天然水">
+                            <div class="water-img-container">
+                                <img src="premiere.png" alt="アルカリ天然水">
+                            </div>
+                            <div class="water-name">アルカリ天然水</div>
+                        </label>
+                        <label>
+                            <input type="checkbox" value="ウォーターサーバー">
+                            <div class="water-img-container">
+                                <img src="server.png" alt="ウォーターサーバー">
+                            </div>
+                            <div class="water-name">ウォーターサーバー</div>
+                        </label>
+                    </div>
+                </div>
+                <button id="next-to-order" class="btn btn-dealer"><i class="fas fa-arrow-right"></i>次へ進む</button>
+                <div id="water-error" class="error"></div>
+            </div>
+
+            <!-- ディーラーステージ2: 順番の設定 -->
+            <div id="dealer-stage-2" class="card dealer-card" style="display:none;">
+                <div class="card-title">
+                    <i class="fas fa-sort-amount-down"></i> 提供順序の設定
+                </div>
+                <div class="card-content">
+                    <p>水を提供する順番に並び替えてください。この順番でプレイヤーに水を提供します。</p>
+                    <ul id="order-list" class="sortable-list">
+                        <!-- 選択した水がここに表示される -->
+                    </ul>
+                </div>
+                <button id="confirm-order" class="btn btn-dealer"><i class="fas fa-check"></i>この順番で確定</button>
+            </div>
+
+            <!-- ディーラーステージ3: セキュリティ設定と手順確認 -->
+            <div id="dealer-stage-3" class="card dealer-card" style="display:none;">
+                <div class="card-title">
+                    <i class="fas fa-shield-alt"></i> セッションの作成
+                </div>
+                <div class="card-content">
+                    <p>テストセッションが作成されました。以下のセッションIDをプレイヤーに伝えてください。</p>
+                    <div class="test-config-details">
+                        <h3>セッション情報</h3>
+                        <p>セッションID: <span id="session-id" class="session-id"></span></p>
+                        <p>使用する水の数: <span id="water-count"></span>種類</p>
+                        <div class="form-group">
+                            <label for="session-password">セッションパスワード（任意）</label>
+                            <input type="password" id="session-password" placeholder="パスワードを設定する場合は入力してください">
+                            <small>※このセッションにパスワードを設定すると、結果確認時にパスワードが必要になります</small>
+                        </div>
+                    </div>
+                </div>
+                <button id="generate-instructions" class="btn btn-dealer"><i class="fas fa-print"></i>手順書を表示</button>
+                <button id="complete-setup" class="btn btn-success"><i class="fas fa-check-circle"></i>セットアップ完了</button>
+            </div>
+
+            <!-- 手順書表示エリア -->
+            <div id="instructions-card" class="card" style="display:none;">
+                <div class="card-title">
+                    <i class="fas fa-file-alt"></i> 利き水チャレンジ手順書
+                </div>
+                <div class="printed-instructions">
+                    <h3>ディーラー用手順</h3>
+                    <ol>
+                        <li>以下の水を準備してください：</li>
+                        <div id="water-list" class="water-list"></div>
+                        <li>水をプレイヤーに以下の順番で提供してください：</li>
+                        <div id="serving-order" class="water-list"></div>
+                        <li>プレイヤーに以下のセッションIDを伝えてください：<span id="print-session-id" class="session-id"></span></li>
+                        <li>プレイヤーに「プレイヤーモード」を選択して、セッションIDを入力するよう指示してください。</li>
+                        <li>各杯ごとにプレイヤーが仮回答を記録したら、次の水を提供してください。</li>
+                    </ol>
+                    <div id="password-instructions" style="display:none;">
+                        <p><strong>注意：</strong> このセッションはパスワードで保護されています。</p>
+                        <p>結果確認時に必要なパスワード：<span id="print-password" class="session-id"></span></p>
+                    </div>
+                </div>
+                <button id="print-instructions" class="btn"><i class="fas fa-print"></i>印刷する</button>
+                <button id="back-to-setup" class="btn btn-outline"><i class="fas fa-arrow-left"></i>戻る</button>
+            </div>
+
+            <!-- 結果表示画面 (ディーラー用) -->
+            <div id="dealer-results-screen" class="card" style="display:none;">
+                <div class="card-title">
+                    <i class="fas fa-trophy"></i> テスト結果
+                </div>
+                <div id="result-message"></div>
+                <div class="comparison">
+                    <div class="comparison-column dealer-column">
+                        <h3>ディーラーの選択</h3>
+                        <div id="dealer-results">
+                            <!-- ディーラーの選択を表示 -->
+                        </div>
+                    </div>
+                    <div class="comparison-column player-column">
+                        <h3>プレイヤーの回答</h3>
+                        <div id="player-results">
+                            <!-- プレイヤーの選択を表示 -->
+                        </div>
+                    </div>
+                </div>
+                <button id="new-session" class="btn btn-dealer"><i class="fas fa-plus"></i>新しいセッションを作成</button>
+                <button id="go-home" class="btn btn-outline"><i class="fas fa-home"></i>ホームに戻る</button>
+            </div>
+        </div>
+
+        <!-- プレイヤーモード -->
+        <div id="player-section" class="stage">
+            <!-- セッションID入力画面 -->
+            <div id="session-join" class="card player-card">
+                <div class="card-title">
+                    <i class="fas fa-sign-in-alt"></i> セッションに参加
+                </div>
+                <div class="card-content">
+                    <p>ディーラーから受け取ったセッションIDを入力してください。</p>
+                    <div class="form-group">
+                        <label for="join-session-id">セッションID</label>
+                        <input type="text" id="join-session-id" placeholder="例: ABC123">
+                    </div>
+                </div>
+                <button id="join-session" class="btn btn-player"><i class="fas fa-sign-in-alt"></i>参加する</button>
+                <div id="join-error" class="error"></div>
+            </div>
+
+            <!-- テイスティングプロセス -->
+            <div id="tasting-process" class="card player-card" style="display:none;">
+                <div class="card-title">
+                    <i class="fas fa-glass-water"></i> テイスティング
+                </div>
+                <div class="cup-display">
+                    <div class="cup-number" id="current-cup-display">1</div>
+                    <div class="cup-label">杯目</div>
+                </div>
+                <div class="card-content">
+                    <p>現在の杯の水について、正解だと思うものを選択してください（複数選択可）。</p>
+                    <div id="player-water-selection" class="water-grid">
+                        <!-- 選択肢がここに表示される -->
+                    </div>
+                </div>
+                <button id="submit-guess" class="btn btn-player"><i class="fas fa-check"></i>選択を確定</button>
+                <div id="guess-error" class="error"></div>
+            </div>
+
+            <!-- 最終回答画面 -->
+            <div id="final-answer" class="card player-card" style="display:none;">
+                <div class="card-title">
+                    <i class="fas fa-flag-checkered"></i> 最終回答
+                </div>
+                <div class="card-content">
+                    <p>すべての水を試飲しました。提供された順番で水の種類を選択してください。</p>
+                    <div id="provisional-answers">
+                        <h3>途中回答の記録</h3>
+                        <!-- 途中回答の記録がここに表示される -->
+                    </div>
+                    <div id="final-answer-form">
+                        <!-- 最終回答フォームがここに表示される -->
+                    </div>
+                </div>
+                <button id="submit-final" class="btn btn-success"><i class="fas fa-paper-plane"></i>最終回答を提出</button>
+                <div id="final-error" class="error"></div>
+            </div>
+
+            <!-- 結果表示画面 (プレイヤー用) -->
+            <div id="player-results-screen" class="card" style="display:none;">
+                <div class="card-title">
+                    <i class="fas fa-trophy"></i> テスト結果
+                </div>
+                <div id="player-result-message"></div>
+                <div class="comparison">
+                    <div class="comparison-column dealer-column">
+                        <h3>正解</h3>
+                        <div id="correct-answers">
+                            <!-- 正解を表示 -->
+                        </div>
+                    </div>
+                    <div class="comparison-column player-column">
+                        <h3>あなたの回答</h3>
+                        <div id="your-answers">
+                            <!-- プレイヤーの回答を表示 -->
+                        </div>
+                    </div>
+                </div>
+                <div id="result-password-section" style="display:none;">
+                    <div class="form-group">
+                        <label for="result-password">結果を確認するにはパスワードを入力してください</label>
+                        <input type="password" id="result-password" placeholder="パスワードを入力">
+                    </div>
+                    <button id="verify-password" class="btn btn-player"><i class="fas fa-unlock"></i>確認する</button>
+                    <div id="password-error" class="error"></div>
+                </div>
+                <button id="try-again" class="btn btn-player"><i class="fas fa-redo"></i>別のセッションに参加</button>
+                <button id="player-go-home" class="btn btn-outline"><i class="fas fa-home"></i>ホームに戻る</button>
+            </div>
+        </div>
+
+        <!-- 追加ボタン (ディーラーモードでのみ表示) -->
+        <button id="add-water-button" class="add-water-button" style="display:none;">
             <i class="fas fa-plus"></i>
         </button>
     </div>
@@ -873,513 +1269,800 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="cancel-add"><i class="fas fa-times"></i>キャンセル</button>
-                <button class="btn" id="confirm-add"><i class="fas fa-plus"></i>追加</button>
+                <button class="btn btn-outline" id="cancel-add"><i class="fas fa-times"></i>キャンセル</button>
+                <button class="btn btn-dealer" id="confirm-add"><i class="fas fa-plus"></i>追加</button>
             </div>
         </div>
     </div>
 
-    <!-- ローディングアニメーション -->
-    <div class="loader" id="loader">
-        <div class="loader-inner"></div>
-    </div>
+    <!-- 通知表示用 -->
+    <div id="notification" class="notification"></div>
 
     <script>
-        // JavaScriptのロジック
-
-        let selectedWaters = [];
-        let dealerOrder = [];
-        let playerProvisionalGuesses = [];
-        let dealerActualSelections = [];
-        let playerFinalSelections = [];
-        let correctCount = 0;
-        let currentCup = 1;
-        let totalCups = 0;
-        let customWaters = []; // カスタム水のリスト
-
-        // DOM要素
-        const stage1 = document.getElementById('stage-1');
-        const stage2 = document.getElementById('stage-2');
-        const stageAlpha = document.getElementById('stage-alpha');
-        const stageBeta = document.getElementById('stage-beta');
-        const stage3 = document.getElementById('stage-3');
-        const stage4 = document.getElementById('stage-4');
-        const errorMessage = document.getElementById('error-message');
-        const alphaError = document.getElementById('alpha-error');
-        const finalError = document.getElementById('final-error');
-        const progressSteps = document.querySelectorAll('.progress-step');
-        const progressBarInner = document.querySelector('.progress-bar-inner');
-        const addWaterModal = document.getElementById('add-water-modal');
-        const imagePreview = document.getElementById('image-preview');
-        const previewImg = document.getElementById('preview-img');
-        const loader = document.getElementById('loader');
-
-        // 進行状況の更新
-        function updateProgress(step) {
-            // ステップのアクティブ状態を更新
-            progressSteps.forEach(stepEl => {
-                const stepNum = parseInt(stepEl.getAttribute('data-step'));
-                if (stepNum < step) {
-                    stepEl.classList.remove('active');
-                    stepEl.classList.add('completed');
-                } else if (stepNum === step) {
-                    stepEl.classList.add('active');
-                    stepEl.classList.remove('completed');
-                } else {
-                    stepEl.classList.remove('active');
-                    stepEl.classList.remove('completed');
-                }
+        document.addEventListener('DOMContentLoaded', function() {
+            // グローバル変数
+            let selectedWaters = [];
+            let dealerOrder = [];
+            let customWaters = [];
+            let gameMode = '';
+            let currentCup = 1;
+            let totalCups = 0;
+            let sessionId = '';
+            let sessionPassword = '';
+            let playerProvisionalAnswers = [];
+            let playerFinalAnswers = [];
+            let testResults = null;
+            let isPasswordProtected = false;
+            
+            // DOM要素
+            const homeScreen = document.getElementById('home-screen');
+            const dealerSection = document.getElementById('dealer-section');
+            const playerSection = document.getElementById('player-section');
+            const dealerModeLabel = document.getElementById('dealer-mode-label');
+            const playerModeLabel = document.getElementById('player-mode-label');
+            const addWaterButton = document.getElementById('add-water-button');
+            const addWaterModal = document.getElementById('add-water-modal');
+            
+            // ディーラーモードのステージ
+            const dealerStage1 = document.getElementById('dealer-stage-1');
+            const dealerStage2 = document.getElementById('dealer-stage-2');
+            const dealerStage3 = document.getElementById('dealer-stage-3');
+            const instructionsCard = document.getElementById('instructions-card');
+            const dealerResultsScreen = document.getElementById('dealer-results-screen');
+            
+            // プレイヤーモードのステージ
+            const sessionJoin = document.getElementById('session-join');
+            const tastingProcess = document.getElementById('tasting-process');
+            const finalAnswer = document.getElementById('final-answer');
+            const playerResultsScreen = document.getElementById('player-results-screen');
+            
+            // エラー表示要素
+            const waterError = document.getElementById('water-error');
+            const joinError = document.getElementById('join-error');
+            const guessError = document.getElementById('guess-error');
+            const finalError = document.getElementById('final-error');
+            const passwordError = document.getElementById('password-error');
+            
+            // セキュリティ関連
+            const resultPasswordSection = document.getElementById('result-password-section');
+            const passwordInstructions = document.getElementById('password-instructions');
+            
+            // モードセレクターのボタン
+            document.getElementById('dealer-button').addEventListener('click', function() {
+                switchToMode('dealer');
             });
             
-            // プログレスバーの更新
-            progressBarInner.style.width = `${(step - 1) * 100 / (progressSteps.length - 1)}%`;
-        }
-
-        // エラー表示関数
-        function showError(element, message) {
-            element.textContent = message;
-            element.style.display = 'block';
-            setTimeout(() => {
-                element.style.opacity = '1';
-            }, 10);
-        }
-
-        function hideError(element) {
-            element.style.opacity = '0';
-            setTimeout(() => {
+            document.getElementById('player-button').addEventListener('click', function() {
+                switchToMode('player');
+            });
+            
+            // モード切り替え関数
+            function switchToMode(mode) {
+                gameMode = mode;
+                homeScreen.style.display = 'none';
+                
+                if (mode === 'dealer') {
+                    dealerSection.style.display = 'block';
+                    dealerModeLabel.style.display = 'inline-block';
+                    playerModeLabel.style.display = 'none';
+                    addWaterButton.style.display = 'flex';
+                    resetDealerMode();
+                } else if (mode === 'player') {
+                    playerSection.style.display = 'block';
+                    playerModeLabel.style.display = 'inline-block';
+                    dealerModeLabel.style.display = 'none';
+                    addWaterButton.style.display = 'none';
+                    resetPlayerMode();
+                }
+            }
+            
+            // ディーラーモードのリセット
+            function resetDealerMode() {
+                dealerStage1.style.display = 'block';
+                dealerStage2.style.display = 'none';
+                dealerStage3.style.display = 'none';
+                instructionsCard.style.display = 'none';
+                dealerResultsScreen.style.display = 'none';
+                
+                // チェックボックスのクリア
+                const checkboxes = document.querySelectorAll('#water-selection input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = false);
+                
+                selectedWaters = [];
+                dealerOrder = [];
+                sessionId = generateSessionId();
+                currentCup = 1;
+            }
+            
+            // プレイヤーモードのリセット
+            function resetPlayerMode() {
+                sessionJoin.style.display = 'block';
+                tastingProcess.style.display = 'none';
+                finalAnswer.style.display = 'none';
+                playerResultsScreen.style.display = 'none';
+                
+                document.getElementById('join-session-id').value = '';
+                playerProvisionalAnswers = [];
+                playerFinalAnswers = [];
+                currentCup = 1;
+            }
+            
+            // セッションIDの生成
+            function generateSessionId() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let id = '';
+                for (let i = 0; i < 6; i++) {
+                    id += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return id;
+            }
+            
+            // エラー表示関数
+            function showError(element, message) {
+                element.textContent = message;
+                element.style.display = 'block';
+            }
+            
+            function hideError(element) {
                 element.style.display = 'none';
-            }, 300);
-        }
-
-        // ステージ1 -> ステージ2
-        document.getElementById('next-to-order').addEventListener('click', () => {
-            const checkboxes = document.querySelectorAll('#water-selection input[type="checkbox"]:checked');
-            if (checkboxes.length <= 1) {
-                showError(errorMessage, '2つ以上の水を選択してください。');
-                return;
             }
-            hideError(errorMessage);
-            selectedWaters = Array.from(checkboxes).map(cb => cb.value);
-            totalCups = selectedWaters.length;
             
-            // ステージを切り替え
-            stage1.style.display = 'none';
-            stage2.style.display = 'block';
-            updateProgress(2);
+            // 通知表示関数
+            function showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
             
-            // 順序リストを初期化
-            initializeOrderList();
-        });
-
-        // 順序入れ替えリストの初期化（ステージ2）
-        function initializeOrderList() {
-            const orderList = document.getElementById('order-list');
-            orderList.innerHTML = '';
-            selectedWaters.forEach(water => {
-                const li = document.createElement('li');
-                li.setAttribute('data-value', water);
-                li.innerHTML = `
-                    <img src="${getImageFile(water)}" alt="${water}">
-                    <span>${water}</span>
-                    <div class="handle"><i class="fas fa-grip-lines"></i></div>
-                `;
-                orderList.appendChild(li);
+            // ========== ディーラーモードの処理 ==========
+            
+            // ディーラーステージ1 -> ステージ2
+            document.getElementById('next-to-order').addEventListener('click', function() {
+                const checkboxes = document.querySelectorAll('#water-selection input[type="checkbox"]:checked');
+                if (checkboxes.length <= 1) {
+                    showError(waterError, '2つ以上の水を選択してください。');
+                    return;
+                }
+                hideError(waterError);
+                
+                selectedWaters = Array.from(checkboxes).map(cb => cb.value);
+                totalCups = selectedWaters.length;
+                
+                // ステージ切り替え
+                dealerStage1.style.display = 'none';
+                dealerStage2.style.display = 'block';
+                
+                // 順序リストの初期化
+                initializeOrderList();
             });
             
-            // Sortable.jsを初期化
-            Sortable.create(orderList, {
-                animation: 150,
-                handle: '.handle',
-                ghostClass: 'sortable-ghost'
-            });
-        }
-
-        // ステージ2 -> ステージβ
-        document.getElementById('confirm-order').addEventListener('click', () => {
-            const orderItems = document.querySelectorAll('#order-list li');
-            dealerOrder = Array.from(orderItems).map(item => item.getAttribute('data-value'));
-            
-            // ステージを切り替え
-            stage2.style.display = 'none';
-            stageBeta.style.display = 'block';
-            updateProgress(3);
-            
-            // ステージβを初期化
-            initializeStageBeta();
-        });
-
-        // ステージβの初期化
-        function initializeStageBeta() {
-            if (currentCup > totalCups) {
-                // すべての杯が終わったらステージ3へ
-                stageBeta.style.display = 'none';
-                stage3.style.display = 'block';
-                updateProgress(5);
-                initializeFinalSelection();
-                return;
-            }
-
-            const dealerWater = dealerOrder[currentCup - 1];
-            dealerActualSelections.push(dealerWater);
-            document.getElementById('current-cup-beta').textContent = currentCup;
-            document.getElementById('dealer-water-name').textContent = dealerWater;
-            document.getElementById('dealer-water-img').src = getImageFile(dealerWater);
-            document.getElementById('dealer-water-img').alt = dealerWater;
-
-            // 「次へ」ボタンを表示
-            document.getElementById('next-beta').style.display = 'block';
-        }
-
-        // ステージβ -> ステージα
-        document.getElementById('next-beta').addEventListener('click', () => {
-            stageBeta.style.display = 'none';
-            stageAlpha.style.display = 'block';
-            updateProgress(4);
-            initializeAlphaSelection();
-        });
-
-        // ステージα: 仮回答の選択を初期化
-        function initializeAlphaSelection() {
-            document.getElementById('current-cup-alpha').textContent = currentCup;
-            
-            const alphaSelection = document.getElementById('alpha-selection');
-            alphaSelection.innerHTML = '';
-            selectedWaters.forEach(water => {
-                const label = document.createElement('label');
-                label.innerHTML = `
-                    <input type="checkbox" name="alpha-choice" value="${water}">
-                    <div class="water-img-container">
+            // 順序リストの初期化
+            function initializeOrderList() {
+                const orderList = document.getElementById('order-list');
+                orderList.innerHTML = '';
+                
+                selectedWaters.forEach(water => {
+                    const li = document.createElement('li');
+                    li.setAttribute('data-value', water);
+                    li.innerHTML = `
                         <img src="${getImageFile(water)}" alt="${water}">
-                    </div>
-                    <div class="water-name">${water}</div>
-                `;
-                alphaSelection.appendChild(label);
-            });
-        }
-
-        // ステージα: 送信ボタンのイベントリスナー
-        document.getElementById('submit-alpha').addEventListener('click', () => {
-            const checkedBoxes = document.querySelectorAll('#alpha-selection input[type="checkbox"]:checked');
-            if (checkedBoxes.length === 0) {
-                showError(alphaError, '少なくとも1つの水を選択してください。');
-                return;
+                        <span>${water}</span>
+                        <div class="handle"><i class="fas fa-grip-lines"></i></div>
+                    `;
+                    orderList.appendChild(li);
+                });
+                
+                // Sortable.jsの初期化
+                Sortable.create(orderList, {
+                    animation: 150,
+                    handle: '.handle',
+                    ghostClass: 'sortable-ghost'
+                });
             }
-            hideError(alphaError);
             
-            const provisionalGuesses = Array.from(checkedBoxes).map(cb => cb.value);
-            playerProvisionalGuesses.push(provisionalGuesses);
+            // ディーラーステージ2 -> ステージ3
+            document.getElementById('confirm-order').addEventListener('click', function() {
+                const orderItems = document.querySelectorAll('#order-list li');
+                dealerOrder = Array.from(orderItems).map(item => item.getAttribute('data-value'));
+                
+                // ステージ切り替え
+                dealerStage2.style.display = 'none';
+                dealerStage3.style.display = 'block';
+                
+                // セッション情報の表示
+                document.getElementById('session-id').textContent = sessionId;
+                document.getElementById('water-count').textContent = selectedWaters.length;
+                
+                // セッション情報をローカルストレージに保存
+                saveSessionToStorage();
+            });
             
-            // 現在の杯をインクリメント
-            currentCup++;
-            
-            if (currentCup > totalCups) {
-                // すべての杯が終わったらステージ3へ
-                stageAlpha.style.display = 'none';
-                stage3.style.display = 'block';
-                updateProgress(5);
-                initializeFinalSelection();
-            } else {
-                // 次の杯へ
-                stageAlpha.style.display = 'none';
-                stageBeta.style.display = 'block';
-                updateProgress(3);
-                initializeStageBeta();
+            // セッション情報をローカルストレージに保存
+            function saveSessionToStorage() {
+                const sessionData = {
+                    id: sessionId,
+                    selectedWaters: selectedWaters,
+                    dealerOrder: dealerOrder,
+                    password: '',
+                    customWaters: customWaters,
+                    playerAnswers: null
+                };
+                
+                localStorage.setItem(`water-session-${sessionId}`, JSON.stringify(sessionData));
             }
-        });
-
-        // Stage3: プレイヤーの最終選択を初期化
-        function initializeFinalSelection() {
-            const finalOrderList = document.getElementById('final-order-list');
-            finalOrderList.innerHTML = '';
-            selectedWaters.forEach((water, index) => {
-                const li = document.createElement('li');
-                li.setAttribute('data-value', water);
-                li.innerHTML = `
-                    <img src="${getImageFile(water)}" alt="${water}">
-                    <span>${water}</span>
-                    <div class="handle"><i class="fas fa-grip-lines"></i></div>
-                `;
-                finalOrderList.appendChild(li);
+            
+            // 手順書の生成と表示
+            document.getElementById('generate-instructions').addEventListener('click', function() {
+                const password = document.getElementById('session-password').value;
+                if (password) {
+                    sessionPassword = password;
+                    isPasswordProtected = true;
+                    
+                    // パスワード情報をセッションに保存
+                    const sessionData = JSON.parse(localStorage.getItem(`water-session-${sessionId}`));
+                    sessionData.password = password;
+                    localStorage.setItem(`water-session-${sessionId}`, JSON.stringify(sessionData));
+                    
+                    // パスワード情報を手順書に表示
+                    passwordInstructions.style.display = 'block';
+                    document.getElementById('print-password').textContent = password;
+                } else {
+                    passwordInstructions.style.display = 'none';
+                }
+                
+                // 手順書の内容を設定
+                document.getElementById('print-session-id').textContent = sessionId;
+                
+                // 水リストの表示
+                const waterList = document.getElementById('water-list');
+                waterList.innerHTML = '';
+                selectedWaters.forEach(water => {
+                    waterList.innerHTML += `<div>${water}</div>`;
+                });
+                
+                // 提供順序の表示
+                const servingOrder = document.getElementById('serving-order');
+                servingOrder.innerHTML = '';
+                dealerOrder.forEach((water, index) => {
+                    servingOrder.innerHTML += `<div>${index + 1}杯目: ${water}</div>`;
+                });
+                
+                // 手順書カードを表示
+                dealerStage3.style.display = 'none';
+                instructionsCard.style.display = 'block';
             });
             
-            // Sortable.jsを初期化
-            Sortable.create(finalOrderList, {
-                animation: 150,
-                handle: '.handle',
-                ghostClass: 'sortable-ghost'
+            // 手順書の印刷
+            document.getElementById('print-instructions').addEventListener('click', function() {
+                window.print();
             });
-
-            // 仮回答の参考資料を表示
-            displayProvisionalGuesses();
-        }
-
-        // 仮回答の参考資料を表示する関数
-        function displayProvisionalGuesses() {
-            const provisionalDisplay = document.getElementById('provisional-display');
-            provisionalDisplay.innerHTML = '<h3>各杯の仮回答</h3>';
-            playerProvisionalGuesses.forEach((guesses, index) => {
-                provisionalDisplay.innerHTML += `
-                <p>
-                    <span class="cup-number">第${index + 1}杯目:</span>
-                    <span class="provisional-guesses">${guesses.join('、')}</span>
-                </p>`;
+            
+            // 手順書から設定画面に戻る
+            document.getElementById('back-to-setup').addEventListener('click', function() {
+                instructionsCard.style.display = 'none';
+                dealerStage3.style.display = 'block';
             });
-        }
-
-        // Stage3: 確認ボタンのイベントリスナー
-        document.getElementById('confirm-final').addEventListener('click', () => {
-            // 最終選択を取得
-            const finalOrderItems = document.querySelectorAll('#final-order-list li');
-            playerFinalSelections = Array.from(finalOrderItems).map(item => item.getAttribute('data-value'));
-
-            // 全杯分が選択されているか確認
-            if (playerFinalSelections.length !== totalCups) {
-                showError(finalError, '全ての杯について水を並び替えてください。');
-                return;
+            
+            // セットアップ完了
+            document.getElementById('complete-setup').addEventListener('click', function() {
+                const password = document.getElementById('session-password').value;
+                if (password) {
+                    sessionPassword = password;
+                    isPasswordProtected = true;
+                    
+                    // パスワード情報をセッションに保存
+                    const sessionData = JSON.parse(localStorage.getItem(`water-session-${sessionId}`));
+                    sessionData.password = password;
+                    localStorage.setItem(`water-session-${sessionId}`, JSON.stringify(sessionData));
+                }
+                
+                showNotification('セットアップが完了しました！プレイヤーにセッションIDを伝えてください。');
+            });
+            
+            // 新しいセッションを作成
+            document.getElementById('new-session').addEventListener('click', function() {
+                resetDealerMode();
+                dealerResultsScreen.style.display = 'none';
+                dealerStage1.style.display = 'block';
+            });
+            
+            // ホームに戻る
+            document.getElementById('go-home').addEventListener('click', function() {
+                dealerSection.style.display = 'none';
+                homeScreen.style.display = 'block';
+                dealerModeLabel.style.display = 'none';
+                addWaterButton.style.display = 'none';
+            });
+            
+            // ========== プレイヤーモードの処理 ==========
+            
+            // セッションに参加
+            document.getElementById('join-session').addEventListener('click', function() {
+                const inputSessionId = document.getElementById('join-session-id').value.trim().toUpperCase();
+                
+                if (!inputSessionId) {
+                    showError(joinError, 'セッションIDを入力してください。');
+                    return;
+                }
+                
+                // セッションデータを取得
+                const sessionData = localStorage.getItem(`water-session-${inputSessionId}`);
+                
+                if (!sessionData) {
+                    showError(joinError, '存在しないセッションIDです。正しいIDを入力してください。');
+                    return;
+                }
+                
+                hideError(joinError);
+                sessionId = inputSessionId;
+                
+                // セッションデータをパース
+                const parsedData = JSON.parse(sessionData);
+                selectedWaters = parsedData.selectedWaters;
+                dealerOrder = parsedData.dealerOrder;
+                totalCups = dealerOrder.length;
+                customWaters = parsedData.customWaters || [];
+                
+                if (parsedData.password) {
+                    isPasswordProtected = true;
+                    sessionPassword = parsedData.password;
+                }
+                
+                // プレイヤーのテイスティングプロセスを開始
+                startTastingProcess();
+            });
+            
+            // テイスティングプロセスの開始
+            function startTastingProcess() {
+                sessionJoin.style.display = 'none';
+                tastingProcess.style.display = 'block';
+                
+                // 現在の杯数を表示
+                document.getElementById('current-cup-display').textContent = currentCup;
+                
+                // 選択肢を表示
+                const playerWaterSelection = document.getElementById('player-water-selection');
+                playerWaterSelection.innerHTML = '';
+                
+                selectedWaters.forEach(water => {
+                    const label = document.createElement('label');
+                    label.innerHTML = `
+                        <input type="checkbox" name="player-choice" value="${water}">
+                        <div class="water-img-container">
+                            <img src="${getImageFile(water)}" alt="${water}">
+                        </div>
+                        <div class="water-name">${water}</div>
+                    `;
+                    playerWaterSelection.appendChild(label);
+                });
             }
-            hideError(finalError);
             
-            // ステージを切り替え
-            stage3.style.display = 'none';
-            stage4.style.display = 'block';
-            updateProgress(6);
+            // 仮回答の提出
+            document.getElementById('submit-guess').addEventListener('click', function() {
+                const checkedBoxes = document.querySelectorAll('#player-water-selection input[type="checkbox"]:checked');
+                
+                if (checkedBoxes.length === 0) {
+                    showError(guessError, '少なくとも1つの水を選択してください。');
+                    return;
+                }
+                
+                hideError(guessError);
+                
+                // 選択された水を記録
+                const selectedOptions = Array.from(checkedBoxes).map(cb => cb.value);
+                playerProvisionalAnswers.push({
+                    cup: currentCup,
+                    guesses: selectedOptions
+                });
+                
+                // チェックをリセット
+                checkedBoxes.forEach(cb => cb.checked = false);
+                
+                // 次の杯へ移動または最終回答へ
+                currentCup++;
+                
+                if (currentCup <= totalCups) {
+                    // 次の杯へ
+                    document.getElementById('current-cup-display').textContent = currentCup;
+                    showNotification(`${currentCup}杯目の水を受け取ってください`);
+                } else {
+                    // 全ての杯が終了
+                    tastingProcess.style.display = 'none';
+                    prepareFinalAnswer();
+                }
+            });
             
-            // ローディングアニメーションを表示
-            loader.style.display = 'flex';
-            setTimeout(() => {
-                loader.style.display = 'none';
-                showResults();
-            }, 1000);
-        });
-
-        // 結果を表示（ステージ4）
-        function showResults() {
-            // 正解数を計算
-            correctCount = 0;
-            for (let i = 0; i < totalCups; i++) {
-                if (playerFinalSelections[i] === dealerOrder[i]) {
-                    correctCount++;
+            // 最終回答の準備
+            function prepareFinalAnswer() {
+                finalAnswer.style.display = 'block';
+                
+                // 途中回答の表示
+                const provisionalAnswers = document.getElementById('provisional-answers');
+                provisionalAnswers.innerHTML = '<h3>途中回答の記録</h3>';
+                
+                playerProvisionalAnswers.forEach(answer => {
+                    const answerElement = document.createElement('div');
+                    answerElement.className = 'provisional-answer';
+                    answerElement.innerHTML = `
+                        <strong>${answer.cup}杯目:</strong> ${answer.guesses.join('、')}
+                    `;
+                    provisionalAnswers.appendChild(answerElement);
+                });
+                
+                // 最終回答フォームの準備
+                const finalAnswerForm = document.getElementById('final-answer-form');
+                finalAnswerForm.innerHTML = '<h3>最終回答</h3>';
+                
+                for (let i = 1; i <= totalCups; i++) {
+                    const cupForm = document.createElement('div');
+                    cupForm.className = 'cup-form';
+                    cupForm.innerHTML = `<h4>${i}杯目</h4>`;
+                    
+                    const selectElement = document.createElement('select');
+                    selectElement.className = 'final-select';
+                    selectElement.setAttribute('data-cup', i);
+                    
+                    // 空のオプションを追加
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = '選択してください';
+                    selectElement.appendChild(emptyOption);
+                    
+                    // 水の選択肢を追加
+                    selectedWaters.forEach(water => {
+                        const option = document.createElement('option');
+                        option.value = water;
+                        option.textContent = water;
+                        selectElement.appendChild(option);
+                    });
+                    
+                    cupForm.appendChild(selectElement);
+                    finalAnswerForm.appendChild(cupForm);
                 }
             }
-            const accuracy = ((correctCount / totalCups) * 100).toFixed(1);
             
-            // 結果メッセージを設定
-            const resultMessage = document.getElementById('result-message');
-            resultMessage.innerHTML = `
-                <div>${totalCups}杯中 ${correctCount}杯正解！</div>
-                <div>正解率: ${accuracy}%</div>
-            `;
-
-            // ディーラーの選択を表示
-            const dealerResults = document.getElementById('dealer-results');
-            dealerResults.innerHTML = '';
-            
-            // プレイヤーの選択を表示
-            const playerResults = document.getElementById('player-results');
-            playerResults.innerHTML = '';
-            
-            // 結果を比較表示
-            for (let i = 0; i < totalCups; i++) {
-                const dealerWater = dealerOrder[i];
-                const playerWater = playerFinalSelections[i];
-                const isCorrect = dealerWater === playerWater;
+            // 最終回答の提出
+            document.getElementById('submit-final').addEventListener('click', function() {
+                const selects = document.querySelectorAll('.final-select');
                 
-                // ディーラー側
-                const dealerDiv = document.createElement('div');
-                dealerDiv.className = 'comparison-item';
-                dealerDiv.innerHTML = `
-                    <img src="${getImageFile(dealerWater)}" alt="${dealerWater}">
-                    <div class="comparison-item-text">
-                        <div class="cup-number">第${i + 1}杯目</div>
-                        <div class="water-title">${dealerWater}</div>
-                    </div>
-                `;
-                dealerResults.appendChild(dealerDiv);
+                // すべて選択されているか確認
+                let allSelected = true;
+                selects.forEach(select => {
+                    if (!select.value) {
+                        allSelected = false;
+                    }
+                });
                 
-                // プレイヤー側
-                const playerDiv = document.createElement('div');
-                playerDiv.className = isCorrect ? 'comparison-item correct' : 'comparison-item incorrect';
-                playerDiv.innerHTML = `
-                    <img src="${getImageFile(playerWater)}" alt="${playerWater}">
-                    <div class="comparison-item-text">
-                        <div class="cup-number">第${i + 1}杯目</div>
-                        <div class="water-title">${playerWater}</div>
-                        ${isCorrect ? '<div><i class="fas fa-check" style="color: #4CAF50;"></i> 正解</div>' : 
-                                     '<div><i class="fas fa-times" style="color: #F44336;"></i> 不正解</div>'}
-                    </div>
-                `;
-                playerResults.appendChild(playerDiv);
-            }
-        }
-
-        // 画像ファイルを取得
-        function getImageFile(water) {
-            // カスタム水の画像をチェック
-            const customWater = customWaters.find(w => w.name === water);
-            if (customWater) {
-                return customWater.imageUrl;
-            }
-            
-            // デフォルトの水の画像
-            switch(water) {
-                case '天然水': return 'tennensui.png';
-                case 'いろはす': return 'irohasu.png';
-                case 'クリスタルガイザー': return 'crystal.png';
-                case 'エビアン': return 'ebian.png';
-                case '富士山水': return 'fujisansui.png';
-                case 'おいしい水': return 'oisiimizu.png';
-                case 'アルカリ天然水': return 'premiere.png';
-                case 'ウォーターサーバー': return 'server.png';
-                default: return '/api/placeholder/400/400';
-            }
-        }
-
-        // 追加ボタンのイベントリスナー
-        document.getElementById('add-water-button').addEventListener('click', () => {
-            // モーダルをリセット
-            document.getElementById('water-name').value = '';
-            document.getElementById('water-image').value = '';
-            imagePreview.style.display = 'none';
-            
-            // モーダルを表示
-            addWaterModal.style.display = 'flex';
-        });
-
-        // モーダルをキャンセル
-        document.getElementById('cancel-add').addEventListener('click', () => {
-            addWaterModal.style.display = 'none';
-        });
-
-        // モーダルの外側をクリックしたら閉じる
-        addWaterModal.addEventListener('click', (e) => {
-            if (e.target === addWaterModal) {
-                addWaterModal.style.display = 'none';
-            }
-        });
-
-        // 画像ファイル選択時のプレビュー
-        document.getElementById('water-image').addEventListener('change', function(e) {
-            const file = this.files[0];
-            if (file && file.type.match('image.*')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // 新しい水を追加
-        document.getElementById('confirm-add').addEventListener('click', () => {
-            const waterName = document.getElementById('water-name').value.trim();
-            const waterImage = document.getElementById('water-image').files[0];
-            
-            if (!waterName) {
-                alert('水の名前を入力してください。');
-                return;
-            }
-            
-            // 既存の水と同じ名前でないかチェック
-            if (selectedWaters.includes(waterName) || customWaters.some(w => w.name === waterName)) {
-                alert('既に同じ名前の水が存在します。別の名前を入力してください。');
-                return;
-            }
-            
-            // 画像の処理
-            if (waterImage) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    addNewWater(waterName, e.target.result);
-                    addWaterModal.style.display = 'none';
-                };
-                reader.readAsDataURL(waterImage);
-            } else {
-                // 画像がない場合はプレースホルダー画像を使用
-                addNewWater(waterName, '/api/placeholder/400/400');
-                addWaterModal.style.display = 'none';
-            }
-        });
-
-        // 新しい水を追加する関数
-        function addNewWater(name, imageUrl) {
-            // カスタム水のリストに追加
-            customWaters.push({
-                name: name,
-                imageUrl: imageUrl
+                if (!allSelected) {
+                    showError(finalError, 'すべての杯について水を選択してください。');
+                    return;
+                }
+                
+                hideError(finalError);
+                
+                // 最終回答の記録
+                playerFinalAnswers = Array.from(selects).map(select => ({
+                    cup: parseInt(select.getAttribute('data-cup')),
+                    answer: select.value
+                })).sort((a, b) => a.cup - b.cup);
+                
+                // 結果の計算
+                calculateResults();
+                
+                // 結果表示画面へ移動
+                finalAnswer.style.display = 'none';
+                showResults();
             });
             
-            // ステージ1の水選択に追加
-            const waterSelection = document.getElementById('water-selection');
-            const newLabel = document.createElement('label');
-            newLabel.innerHTML = `
-                <input type="checkbox" value="${name}">
-                <div class="water-img-container">
-                    <img src="${imageUrl}" alt="${name}">
-                </div>
-                <div class="water-name">${name}</div>
-            `;
-            waterSelection.appendChild(newLabel);
-            
-            // 追加成功メッセージ
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.textContent = `${name} を追加しました`;
-            notification.style.position = 'fixed';
-            notification.style.bottom = '20px';
-            notification.style.left = '50%';
-            notification.style.transform = 'translateX(-50%)';
-            notification.style.padding = '10px 20px';
-            notification.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
-            notification.style.color = 'white';
-            notification.style.borderRadius = '4px';
-            notification.style.zIndex = '2000';
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        // ドラッグ&ドロップのサポート
-        const fileUpload = document.querySelector('.file-upload');
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            fileUpload.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            fileUpload.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            fileUpload.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight() {
-            fileUpload.classList.add('highlight');
-        }
-
-        function unhighlight() {
-            fileUpload.classList.remove('highlight');
-        }
-
-        fileUpload.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length) {
-                document.getElementById('water-image').files = files;
-                // ファイル選択イベントを発火
-                const event = new Event('change', { bubbles: true });
-                document.getElementById('water-image').dispatchEvent(event);
+            // 結果の計算
+            function calculateResults() {
+                let correctCount = 0;
+                const results = [];
+                
+                for (let i = 0; i < totalCups; i++) {
+                    const playerAnswer = playerFinalAnswers[i].answer;
+                    const correctAnswer = dealerOrder[i];
+                    const isCorrect = playerAnswer === correctAnswer;
+                    
+                    if (isCorrect) {
+                        correctCount++;
+                    }
+                    
+                    results.push({
+                        cup: i + 1,
+                        playerAnswer: playerAnswer,
+                        correctAnswer: correctAnswer,
+                        isCorrect: isCorrect
+                    });
+                }
+                
+                const accuracy = (correctCount / totalCups) * 100;
+                
+                testResults = {
+                    totalCups: totalCups,
+                    correctCount: correctCount,
+                    accuracy: accuracy,
+                    details: results
+                };
+                
+                // セッションデータに結果を保存
+                const sessionData = JSON.parse(localStorage.getItem(`water-session-${sessionId}`));
+                sessionData.playerAnswers = {
+                    provisional: playerProvisionalAnswers,
+                    final: playerFinalAnswers,
+                    results: testResults
+                };
+                
+                localStorage.setItem(`water-session-${sessionId}`, JSON.stringify(sessionData));
             }
-        }
+            
+            // 結果の表示
+            function showResults() {
+                playerResultsScreen.style.display = 'block';
+                
+                if (isPasswordProtected) {
+                    // パスワード保護されている場合
+                    resultPasswordSection.style.display = 'block';
+                    document.getElementById('player-result-message').textContent = '結果を確認するにはパスワードを入力してください。';
+                    return;
+                }
+                
+                displayResults();
+            }
+            
+            // パスワード検証
+            document.getElementById('verify-password').addEventListener('click', function() {
+                const inputPassword = document.getElementById('result-password').value;
+                
+                if (inputPassword !== sessionPassword) {
+                    showError(passwordError, 'パスワードが正しくありません。');
+                    return;
+                }
+                
+                hideError(passwordError);
+                resultPasswordSection.style.display = 'none';
+                displayResults();
+            });
+            
+            // 結果の表示処理
+            function displayResults() {
+                // 結果メッセージの表示
+                const resultMessage = document.getElementById('player-result-message');
+                resultMessage.innerHTML = `
+                    <div>${testResults.totalCups}杯中 ${testResults.correctCount}杯正解！</div>
+                    <div>正解率: ${testResults.accuracy.toFixed(1)}%</div>
+                `;
+                
+                // 詳細結果の表示
+                const correctAnswers = document.getElementById('correct-answers');
+                const yourAnswers = document.getElementById('your-answers');
+                
+                correctAnswers.innerHTML = '';
+                yourAnswers.innerHTML = '';
+                
+                testResults.details.forEach(detail => {
+                    // 正解の表示
+                    const correctItem = document.createElement('div');
+                    correctItem.className = 'comparison-item';
+                    correctItem.innerHTML = `
+                        <img src="${getImageFile(detail.correctAnswer)}" alt="${detail.correctAnswer}">
+                        <div class="comparison-item-text">
+                            <div class="cup-number-small">${detail.cup}杯目</div>
+                            <div class="water-title">${detail.correctAnswer}</div>
+                        </div>
+                    `;
+                    correctAnswers.appendChild(correctItem);
+                    
+                    // プレイヤーの回答表示
+                    const playerItem = document.createElement('div');
+                    playerItem.className = detail.isCorrect ? 'comparison-item correct' : 'comparison-item incorrect';
+                    playerItem.innerHTML = `
+                        <img src="${getImageFile(detail.playerAnswer)}" alt="${detail.playerAnswer}">
+                        <div class="comparison-item-text">
+                            <div class="cup-number-small">${detail.cup}杯目</div>
+                            <div class="water-title">${detail.playerAnswer}</div>
+                            ${detail.isCorrect ? 
+                                '<div><i class="fas fa-check" style="color: #4CAF50;"></i> 正解</div>' : 
+                                '<div><i class="fas fa-times" style="color: #F44336;"></i> 不正解</div>'}
+                        </div>
+                    `;
+                    yourAnswers.appendChild(playerItem);
+                });
+            }
+            
+            // 別のセッションに参加
+            document.getElementById('try-again').addEventListener('click', function() {
+                playerResultsScreen.style.display = 'none';
+                resetPlayerMode();
+            });
+            
+            // ホームに戻る（プレイヤー）
+            document.getElementById('player-go-home').addEventListener('click', function() {
+                playerSection.style.display = 'none';
+                homeScreen.style.display = 'block';
+                playerModeLabel.style.display = 'none';
+            });
+            
+            // ========== 共通の関数 ==========
+            
+            // 画像ファイルの取得
+            function getImageFile(water) {
+                // カスタム水の画像をチェック
+                const customWater = customWaters.find(w => w.name === water);
+                if (customWater) {
+                    return customWater.imageUrl;
+                }
+                
+                // デフォルトの水の画像
+                switch(water) {
+                    case '天然水': return 'tennensui.png';
+                    case 'いろはす': return 'irohasu.png';
+                    case 'クリスタルガイザー': return 'crystal.png';
+                    case 'エビアン': return 'ebian.png';
+                    case '富士山水': return 'fujisansui.png';
+                    case 'おいしい水': return 'oisiimizu.png';
+                    case 'アルカリ天然水': return 'premiere.png';
+                    case 'ウォーターサーバー': return 'server.png';
+                    default: return '/api/placeholder/400/400';
+                }
+            }
+            
+            // ========== 水の追加機能 ==========
+            
+            // 追加ボタンのイベントリスナー
+            document.getElementById('add-water-button').addEventListener('click', function() {
+                // モーダルをリセット
+                document.getElementById('water-name').value = '';
+                document.getElementById('water-image').value = '';
+                document.getElementById('image-preview').style.display = 'none';
+                
+                // モーダルを表示
+                addWaterModal.style.display = 'flex';
+            });
+            
+            // モーダルをキャンセル
+            document.getElementById('cancel-add').addEventListener('click', function() {
+                addWaterModal.style.display = 'none';
+            });
+            
+            // モーダルの外側をクリックしたら閉じる
+            addWaterModal.addEventListener('click', function(e) {
+                if (e.target === addWaterModal) {
+                    addWaterModal.style.display = 'none';
+                }
+            });
+            
+            // 画像ファイル選択時のプレビュー
+            document.getElementById('water-image').addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (file && file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('preview-img').src = e.target.result;
+                        document.getElementById('image-preview').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 新しい水を追加
+            document.getElementById('confirm-add').addEventListener('click', function() {
+                const waterName = document.getElementById('water-name').value.trim();
+                const waterImage = document.getElementById('water-image').files[0];
+                
+                if (!waterName) {
+                    alert('水の名前を入力してください。');
+                    return;
+                }
+                
+                // 既存の水と同じ名前でないかチェック
+                const allWaters = [...selectedWaters, ...customWaters.map(w => w.name)];
+                if (allWaters.includes(waterName)) {
+                    alert('既に同じ名前の水が存在します。別の名前を入力してください。');
+                    return;
+                }
+                
+                // 画像の処理
+                if (waterImage) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        addNewWater(waterName, e.target.result);
+                        addWaterModal.style.display = 'none';
+                    };
+                    reader.readAsDataURL(waterImage);
+                } else {
+                    // 画像がない場合はプレースホルダー画像を使用
+                    addNewWater(waterName, '/api/placeholder/400/400');
+                    addWaterModal.style.display = 'none';
+                }
+            });
+            
+            // 新しい水を追加する関数
+            function addNewWater(name, imageUrl) {
+                // カスタム水のリストに追加
+                customWaters.push({
+                    name: name,
+                    imageUrl: imageUrl
+                });
+                
+                // ステージ1の水選択に追加
+                const waterSelection = document.getElementById('water-selection');
+                const newLabel = document.createElement('label');
+                newLabel.innerHTML = `
+                    <input type="checkbox" value="${name}">
+                    <div class="water-img-container">
+                        <img src="${imageUrl}" alt="${name}">
+                    </div>
+                    <div class="water-name">${name}</div>
+                `;
+                waterSelection.appendChild(newLabel);
+                
+                showNotification(`${name} を追加しました`);
+            }
+            
+            // ドラッグ&ドロップのサポート
+            const fileUpload = document.querySelector('.file-upload');
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                fileUpload.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileUpload.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileUpload.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                fileUpload.style.borderColor = var(--primary-color);
+                fileUpload.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
+            }
+            
+            function unhighlight() {
+                fileUpload.style.borderColor = '#e0e0e0';
+                fileUpload.style.backgroundColor = '#f9f9f9';
+            }
+            
+            fileUpload.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length) {
+                    document.getElementById('water-image').files = files;
+                    // ファイル選択イベントを発火
+                    const event = new Event('change', { bubbles: true });
+                    document.getElementById('water-image').dispatchEvent(event);
+                }
+            }
+            
+            // アコーディオンの動作
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    content.classList.toggle('show');
+                    
+                    // アイコンの回転
+                    const icon = this.querySelector('i');
+                    if (content.classList.contains('show')) {
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        icon.style.transform = 'rotate(0)';
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>
