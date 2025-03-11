@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>利き〇〇</title>
+    <title>目隠しテイスティングゲーム</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
@@ -56,6 +56,7 @@
         .option-card {
             transition: all 0.2s ease;
             cursor: pointer;
+            position: relative;
         }
         .option-card.selected {
             border-color: #4299e1;
@@ -63,6 +64,13 @@
         }
         .option-card:hover:not(.selected) {
             border-color: #a0aec0;
+        }
+        .dragging {
+            opacity: 0.5;
+            background-color: #e2e8f0;
+        }
+        .drag-over {
+            border-top: 2px solid #4299e1;
         }
     </style>
 </head>
@@ -81,6 +89,7 @@
             playerGuesses: [],
             currentRole: 'none', // 'dealer', 'player', 'none'
             itemBeingDragged: null,
+            draggedItemIndex: null
         };
 
         // Initial load
@@ -268,6 +277,12 @@
 
         // Add new item modal
         function showAddItemModal() {
+            // Remove any existing modal first
+            const existingModal = document.getElementById('addItemModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
             const modalOverlay = document.createElement('div');
             modalOverlay.className = 'overlay fade-in';
             modalOverlay.id = 'addItemModal';
@@ -323,7 +338,8 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        document.getElementById('preview').src = e.target.result;
+                        const preview = document.getElementById('preview');
+                        preview.src = e.target.result;
                         document.getElementById('imagePreview').classList.remove('hidden');
                     };
                     reader.readAsDataURL(file);
@@ -332,11 +348,11 @@
             
             // Close modal handlers
             document.getElementById('closeModal').addEventListener('click', () => {
-                document.getElementById('addItemModal').remove();
+                modalOverlay.remove();
             });
             
             document.getElementById('cancelAddItem').addEventListener('click', () => {
-                document.getElementById('addItemModal').remove();
+                modalOverlay.remove();
             });
             
             // Save button
@@ -351,7 +367,7 @@
                     
                     state.items.push(newItem);
                     saveItems();
-                    document.getElementById('addItemModal').remove();
+                    modalOverlay.remove();
                     showToast(`${name}を追加しました`, 'success');
                     renderApp();
                 } else {
@@ -379,13 +395,15 @@
             // Items list for reordering
             const itemsList = document.createElement('div');
             itemsList.className = 'bg-white rounded-lg shadow mb-8';
+            itemsList.id = 'reorderableList';
             
             state.servingOrder.forEach((itemIndex, orderIndex) => {
                 const item = state.items[itemIndex];
                 const itemRow = document.createElement('div');
                 itemRow.className = 'p-4 border-b last:border-b-0 flex items-center';
                 itemRow.setAttribute('draggable', 'true');
-                itemRow.dataset.index = orderIndex;
+                itemRow.dataset.orderIndex = orderIndex;
+                itemRow.dataset.itemIndex = itemIndex;
                 
                 // Item image or placeholder
                 let imageHtml = '';
@@ -408,32 +426,12 @@
                     </div>
                 `;
                 
-                // Drag and drop functionality
-                itemRow.addEventListener('dragstart', (e) => {
-                    state.itemBeingDragged = orderIndex;
-                    itemRow.classList.add('bg-gray-100');
-                });
-                
-                itemRow.addEventListener('dragend', () => {
-                    itemRow.classList.remove('bg-gray-100');
-                });
-                
-                itemRow.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                });
-                
-                itemRow.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const dropIndex = parseInt(itemRow.dataset.index);
-                    if (state.itemBeingDragged !== null && state.itemBeingDragged !== dropIndex) {
-                        // Reorder the items
-                        const draggedItem = state.servingOrder[state.itemBeingDragged];
-                        state.servingOrder.splice(state.itemBeingDragged, 1);
-                        state.servingOrder.splice(dropIndex, 0, draggedItem);
-                        state.itemBeingDragged = null;
-                        renderApp();
-                    }
-                });
+                // Drag and drop event listeners
+                itemRow.addEventListener('dragstart', handleDragStart);
+                itemRow.addEventListener('dragend', handleDragEnd);
+                itemRow.addEventListener('dragover', handleDragOver);
+                itemRow.addEventListener('dragleave', handleDragLeave);
+                itemRow.addEventListener('drop', handleDrop);
                 
                 itemsList.appendChild(itemRow);
             });
@@ -462,6 +460,65 @@
                 renderApp();
             });
             app.appendChild(backButton);
+        }
+
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            this.classList.add('dragging');
+            state.draggedItemIndex = parseInt(this.dataset.orderIndex);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.orderIndex);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            // Remove drag-over class from all items
+            document.querySelectorAll('.drag-over').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            this.classList.remove('drag-over');
+            
+            const draggedIndex = state.draggedItemIndex;
+            const dropIndex = parseInt(this.dataset.orderIndex);
+            
+            if (draggedIndex !== dropIndex) {
+                // Get the current mode to determine which array to update
+                let arrayToUpdate;
+                if (state.gameMode === 'dealerChooseOrder') {
+                    arrayToUpdate = state.servingOrder;
+                } else if (state.gameMode === 'playerArrange') {
+                    arrayToUpdate = state.playerArrangeOrder;
+                } else {
+                    return; // Not in a reordering mode
+                }
+                
+                // Perform the reordering
+                const draggedItem = arrayToUpdate[draggedIndex];
+                arrayToUpdate.splice(draggedIndex, 1);
+                arrayToUpdate.splice(dropIndex, 0, draggedItem);
+                
+                // Render the updated UI
+                renderApp();
+            }
+            
+            return false;
         }
 
         // Warning popup when switching from player to dealer
@@ -701,9 +758,21 @@
                 state.playerArrangeOrder = state.playerGuesses.slice();
             }
             
+            // Instructions
+            const instructions = document.createElement('div');
+            instructions.className = 'mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg';
+            instructions.innerHTML = `
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    アイテムをドラッグして、テイスティングされた順番に並べてください。
+                </p>
+            `;
+            app.appendChild(instructions);
+            
             // Items list for reordering
             const itemsList = document.createElement('div');
             itemsList.className = 'bg-white rounded-lg shadow mb-8';
+            itemsList.id = 'reorderableList';
             
             state.playerArrangeOrder.forEach((itemIndex, orderIndex) => {
                 const item = state.items[itemIndex];
@@ -711,7 +780,8 @@
                 const itemRow = document.createElement('div');
                 itemRow.className = 'p-4 border-b last:border-b-0 flex items-center';
                 itemRow.setAttribute('draggable', 'true');
-                itemRow.dataset.index = orderIndex;
+                itemRow.dataset.orderIndex = orderIndex;
+                itemRow.dataset.itemIndex = itemIndex;
                 
                 // Item image or placeholder
                 let imageHtml = '';
@@ -736,48 +806,17 @@
                     </div>
                 `;
                 
-                // Drag and drop functionality
-                itemRow.addEventListener('dragstart', (e) => {
-                    state.itemBeingDragged = orderIndex;
-                    itemRow.classList.add('bg-gray-100');
-                });
-                
-                itemRow.addEventListener('dragend', () => {
-                    itemRow.classList.remove('bg-gray-100');
-                });
-                
-                itemRow.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                });
-                
-                itemRow.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const dropIndex = parseInt(itemRow.dataset.index);
-                    if (state.itemBeingDragged !== null && state.itemBeingDragged !== dropIndex) {
-                        // Reorder the items
-                        const draggedItem = state.playerArrangeOrder[state.itemBeingDragged];
-                        state.playerArrangeOrder.splice(state.itemBeingDragged, 1);
-                        state.playerArrangeOrder.splice(dropIndex, 0, draggedItem);
-                        state.itemBeingDragged = null;
-                        renderApp();
-                    }
-                });
+                // Drag and drop event listeners
+                itemRow.addEventListener('dragstart', handleDragStart);
+                itemRow.addEventListener('dragend', handleDragEnd);
+                itemRow.addEventListener('dragover', handleDragOver);
+                itemRow.addEventListener('dragleave', handleDragLeave);
+                itemRow.addEventListener('drop', handleDrop);
                 
                 itemsList.appendChild(itemRow);
             });
             
             app.appendChild(itemsList);
-            
-            // Instructions
-            const instructions = document.createElement('div');
-            instructions.className = 'mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg';
-            instructions.innerHTML = `
-                <p class="text-sm text-yellow-800">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    アイテムをドラッグして、テイスティングされた順番に並べてください。
-                </p>
-            `;
-            app.appendChild(instructions);
             
             // Show results button
             const showResultsBtn = document.createElement('button');
@@ -1008,6 +1047,7 @@
                         renderApp();
                     });
                 }
+                renderApp();
             });
         }
     </script>
