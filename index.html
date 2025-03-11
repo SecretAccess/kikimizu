@@ -41,6 +41,29 @@
         .drag-handle:active {
             cursor: grabbing;
         }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .option-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .option-card.selected {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+        }
+        .option-card:hover:not(.selected) {
+            border-color: #a0aec0;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -79,6 +102,20 @@
             localStorage.setItem('tastingItems', JSON.stringify(state.items));
         }
 
+        // Show a toast message
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg text-white font-medium shadow-lg z-50 fade-in ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
         // Main render function
         function renderApp() {
             const app = document.getElementById('app');
@@ -87,8 +124,9 @@
             // Role badge (always visible)
             if (state.currentRole !== 'none') {
                 const roleBadge = document.createElement('div');
-                roleBadge.className = 'role-badge bg-gray-800 text-white px-3 py-1 rounded-full text-sm';
-                roleBadge.textContent = state.currentRole === 'dealer' ? 'ディーラー' : 'プレイヤー';
+                roleBadge.className = 'role-badge bg-gray-800 text-white px-3 py-1 rounded-full text-sm flex items-center';
+                roleBadge.innerHTML = `<i class="fas ${state.currentRole === 'dealer' ? 'fa-user-tie' : 'fa-user'} mr-2"></i>
+                    ${state.currentRole === 'dealer' ? 'ディーラー' : 'プレイヤー'}`;
                 app.appendChild(roleBadge);
             }
 
@@ -219,6 +257,7 @@
             // Add delete item event handlers
             document.querySelectorAll('.delete-item').forEach(button => {
                 button.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     const index = parseInt(e.currentTarget.dataset.index);
                     state.items.splice(index, 1);
                     saveItems();
@@ -229,13 +268,18 @@
 
         // Add new item modal
         function showAddItemModal() {
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            modal.id = 'addItemModal';
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'overlay fade-in';
+            modalOverlay.id = 'addItemModal';
             
-            modal.innerHTML = `
-                <div class="bg-white rounded-lg w-11/12 max-w-md p-6 fade-in">
-                    <h3 class="text-xl font-bold mb-4">新しいアイテムを追加</h3>
+            modalOverlay.innerHTML = `
+                <div class="bg-white rounded-lg w-11/12 max-w-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">新しいアイテムを追加</h3>
+                        <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                     
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="itemName">
@@ -245,7 +289,7 @@
                     </div>
                     
                     <div class="mb-6">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="itemImage">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">
                             画像 (オプション)
                         </label>
                         <div class="flex items-center">
@@ -271,7 +315,7 @@
                 </div>
             `;
             
-            document.body.appendChild(modal);
+            document.body.appendChild(modalOverlay);
             
             // Preview image when selected
             document.getElementById('itemImage').addEventListener('change', function(e) {
@@ -286,7 +330,11 @@
                 }
             });
             
-            // Cancel button
+            // Close modal handlers
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('addItemModal').remove();
+            });
+            
             document.getElementById('cancelAddItem').addEventListener('click', () => {
                 document.getElementById('addItemModal').remove();
             });
@@ -295,14 +343,16 @@
             document.getElementById('saveNewItem').addEventListener('click', () => {
                 const name = document.getElementById('itemName').value.trim();
                 if (name) {
+                    const imagePreview = document.getElementById('preview');
                     const newItem = {
                         name: name,
-                        image: document.getElementById('preview')?.src || ''
+                        image: imagePreview ? imagePreview.src : ''
                     };
                     
                     state.items.push(newItem);
                     saveItems();
                     document.getElementById('addItemModal').remove();
+                    showToast(`${name}を追加しました`, 'success');
                     renderApp();
                 } else {
                     alert('アイテム名を入力してください');
@@ -397,7 +447,7 @@
             startServingBtn.addEventListener('click', () => {
                 state.gameMode = 'dealerShow';
                 state.currentItemIndex = 0;
-                state.playerGuesses = new Array(state.servingOrder.length).fill('');
+                state.playerGuesses = new Array(state.servingOrder.length).fill(-1); // Initialize with -1 (no selection)
                 renderApp();
             });
             app.appendChild(startServingBtn);
@@ -412,6 +462,32 @@
                 renderApp();
             });
             app.appendChild(backButton);
+        }
+
+        // Warning popup when switching from player to dealer
+        function showPlayerToDealerWarning(callback) {
+            const warningOverlay = document.createElement('div');
+            warningOverlay.className = 'overlay fade-in';
+            warningOverlay.innerHTML = `
+                <div class="bg-white rounded-lg w-11/12 max-w-md p-6 text-center">
+                    <div class="text-red-500 text-5xl mb-4">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">注意！</h3>
+                    <p class="mb-6">これからディーラー画面に切り替わります。ネタバレになるので、プレイヤーは画面を見ないでください。</p>
+                    <div class="flex justify-center">
+                        <button id="confirmSwitchRole" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">
+                            確認して続ける
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(warningOverlay);
+            
+            document.getElementById('confirmSwitchRole').addEventListener('click', () => {
+                warningOverlay.remove();
+                if (callback) callback();
+            });
         }
 
         // Dealer show screen: Show which item to serve
@@ -450,7 +526,7 @@
             itemCard.innerHTML = `
                 ${imageHtml}
                 <h2 class="text-2xl font-bold text-center mb-2">${currentItem.name}</h2>
-                <p class="text-center text-gray-600">このアイテムをプレイヤーに提供してください</p>
+                <p class="text-center text-gray-600 mb-4">このアイテムをプレイヤーに提供してください</p>
                 <div class="border-t border-gray-200 my-4 pt-4">
                     <p class="text-red-600 font-medium text-center">※プレイヤーには画面を見せないでください</p>
                 </div>
@@ -459,11 +535,11 @@
             
             // Navigation buttons
             const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'grid grid-cols-2 gap-4';
+            buttonContainer.className = 'mb-8';
             
             // Player guess button
             const playerGuessBtn = document.createElement('button');
-            playerGuessBtn.className = 'py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg transition-colors';
+            playerGuessBtn.className = 'w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg transition-colors';
             playerGuessBtn.textContent = 'プレイヤーに予想させる';
             playerGuessBtn.addEventListener('click', () => {
                 state.gameMode = 'playerGuess';
@@ -476,7 +552,7 @@
             
             // Progress indicator
             const progressContainer = document.createElement('div');
-            progressContainer.className = 'mt-8';
+            progressContainer.className = 'mt-4';
             progressContainer.innerHTML = `
                 <div class="flex justify-between mb-2 text-sm">
                     <span>進捗</span>
@@ -505,35 +581,86 @@
             `;
             app.appendChild(header);
             
-            // Guess form
+            // Guess form with item selection instead of free text
             const guessForm = document.createElement('div');
             guessForm.className = 'bg-white rounded-lg shadow p-6 mb-8';
-            guessForm.innerHTML = `
-                <p class="font-medium text-lg mb-4">何を味わったと思いますか？</p>
-                <textarea id="playerGuess" class="w-full border rounded-lg p-3 h-24 focus:outline-none focus:ring focus:border-blue-300" placeholder="メモを入力してください...">${state.playerGuesses[state.currentItemIndex]}</textarea>
-                <p class="text-sm text-gray-500 mt-2">※これはメモで、後で変更可能です</p>
+            
+            // Question header
+            const questionHeader = document.createElement('div');
+            questionHeader.className = 'mb-4';
+            questionHeader.innerHTML = `
+                <p class="font-medium text-lg mb-2">何を味わったと思いますか？</p>
+                <p class="text-sm text-gray-500">下のオプションから選択してください</p>
             `;
+            guessForm.appendChild(questionHeader);
+            
+            // Options grid
+            const optionsGrid = document.createElement('div');
+            optionsGrid.className = 'grid grid-cols-2 gap-3 mb-2';
+            
+            // Create an option for each item
+            state.items.forEach((item, index) => {
+                const isSelected = state.playerGuesses[state.currentItemIndex] === index;
+                
+                const optionCard = document.createElement('div');
+                optionCard.className = `option-card p-3 rounded-lg border-2 ${isSelected ? 'selected border-blue-500 bg-blue-50' : 'border-gray-200'}`;
+                optionCard.dataset.index = index;
+                
+                // Item image or placeholder
+                let imageHtml = '';
+                if (item.image) {
+                    imageHtml = `<img src="${item.image}" alt="${item.name}" class="w-full h-20 object-cover rounded mb-2">`;
+                } else {
+                    imageHtml = `<div class="w-full h-20 bg-gray-200 rounded flex items-center justify-center mb-2">
+                        <i class="fas fa-image text-gray-400"></i>
+                    </div>`;
+                }
+                
+                optionCard.innerHTML = `
+                    ${imageHtml}
+                    <p class="font-medium text-center">${item.name}</p>
+                    ${isSelected ? '<div class="absolute top-2 right-2 text-blue-500"><i class="fas fa-check-circle"></i></div>' : ''}
+                `;
+                
+                // Click handler
+                optionCard.addEventListener('click', () => {
+                    state.playerGuesses[state.currentItemIndex] = index;
+                    renderApp();
+                });
+                
+                optionsGrid.appendChild(optionCard);
+            });
+            
+            guessForm.appendChild(optionsGrid);
             app.appendChild(guessForm);
+            
+            // Check if player has selected an item
+            const hasSelection = state.playerGuesses[state.currentItemIndex] !== -1;
             
             // Save and continue button
             const saveBtn = document.createElement('button');
-            saveBtn.className = 'w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg transition-colors';
+            saveBtn.className = `w-full py-3 rounded-lg text-white font-medium text-lg transition-colors ${hasSelection ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`;
+            saveBtn.disabled = !hasSelection;
             saveBtn.innerHTML = state.currentItemIndex + 1 < state.servingOrder.length ? '保存して次へ' : '保存して結果へ';
+            
             saveBtn.addEventListener('click', () => {
-                // Save guess
-                const guess = document.getElementById('playerGuess').value;
-                state.playerGuesses[state.currentItemIndex] = guess;
-                
-                if (state.currentItemIndex + 1 < state.servingOrder.length) {
-                    // Move to next item
-                    state.currentItemIndex++;
-                    state.gameMode = 'dealerShow';
-                    state.currentRole = 'dealer';
-                } else {
-                    // All items tasted, move to arrangement
-                    state.gameMode = 'playerArrange';
+                if (hasSelection) {
+                    if (state.currentItemIndex + 1 < state.servingOrder.length) {
+                        // Move to next item
+                        state.currentItemIndex++;
+                        
+                        // Show warning when switching back to dealer
+                        showPlayerToDealerWarning(() => {
+                            state.gameMode = 'dealerShow';
+                            state.currentRole = 'dealer';
+                            renderApp();
+                        });
+                    } else {
+                        // All items tasted, move to arrangement
+                        state.gameMode = 'playerArrange';
+                        renderApp();
+                    }
                 }
-                renderApp();
             });
             app.appendChild(saveBtn);
             
@@ -563,21 +690,15 @@
             const header = document.createElement('div');
             header.className = 'text-center mb-6';
             header.innerHTML = `
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">アイテムを順番に並べる</h1>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">最終予想</h1>
                 <p class="text-gray-600">テイスティングした順番に並べてください</p>
             `;
             app.appendChild(header);
             
-            // Create player's guess order
+            // Create player's guess order if not already created
             if (!state.playerArrangeOrder) {
-                // Initialize player arrangement with all items in random order
-                state.playerArrangeOrder = [...Array(state.items.length).keys()];
-                // Shuffle the array
-                for (let i = state.playerArrangeOrder.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [state.playerArrangeOrder[i], state.playerArrangeOrder[j]] = 
-                    [state.playerArrangeOrder[j], state.playerArrangeOrder[i]];
-                }
+                // Initialize with indices of the items in the order the player guessed them
+                state.playerArrangeOrder = state.playerGuesses.slice();
             }
             
             // Items list for reordering
@@ -586,7 +707,6 @@
             
             state.playerArrangeOrder.forEach((itemIndex, orderIndex) => {
                 const item = state.items[itemIndex];
-                const playerGuess = state.playerGuesses[orderIndex] || '';
                 
                 const itemRow = document.createElement('div');
                 itemRow.className = 'p-4 border-b last:border-b-0 flex items-center';
@@ -610,9 +730,8 @@
                     ${imageHtml}
                     <div class="flex-grow">
                         <p class="font-medium">${item.name}</p>
-                        <p class="text-sm text-gray-500">あなたのメモ: ${playerGuess}</p>
                     </div>
-                    <div class="text-lg font-medium text-gray-800">
+                    <div class="text-lg font-medium text-gray-800 flex items-center bg-gray-100 w-8 h-8 rounded-full justify-center">
                         ${orderIndex + 1}
                     </div>
                 `;
@@ -649,6 +768,17 @@
             
             app.appendChild(itemsList);
             
+            // Instructions
+            const instructions = document.createElement('div');
+            instructions.className = 'mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg';
+            instructions.innerHTML = `
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    アイテムをドラッグして、テイスティングされた順番に並べてください。
+                </p>
+            `;
+            app.appendChild(instructions);
+            
             // Show results button
             const showResultsBtn = document.createElement('button');
             showResultsBtn.className = 'w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-lg transition-colors';
@@ -682,8 +812,25 @@
             // Results summary
             const resultsSummary = document.createElement('div');
             resultsSummary.className = 'bg-white rounded-lg shadow p-6 mb-8 text-center';
+            
+            // Add appropriate emoji based on score
+            let emoji = '😐';
+            let resultClass = 'text-blue-600';
+            
+            if (correctCount === state.servingOrder.length) {
+                emoji = '🎉';
+                resultClass = 'text-green-600';
+            } else if (correctCount > state.servingOrder.length / 2) {
+                emoji = '👏';
+                resultClass = 'text-blue-600';
+            } else if (correctCount === 0) {
+                emoji = '😭';
+                resultClass = 'text-red-600';
+            }
+            
             resultsSummary.innerHTML = `
-                <div class="text-4xl font-bold ${correctCount === state.servingOrder.length ? 'text-green-600' : 'text-blue-600'} mb-3">
+                <div class="text-5xl mb-3">${emoji}</div>
+                <div class="text-4xl font-bold ${resultClass} mb-3">
                     ${correctCount} / ${state.servingOrder.length}
                 </div>
                 <p class="text-lg">
@@ -700,6 +847,18 @@
             const resultsDetails = document.createElement('div');
             resultsDetails.className = 'bg-white rounded-lg shadow mb-8';
             
+            // Results header
+            const resultsHeader = document.createElement('div');
+            resultsHeader.className = 'p-4 border-b bg-gray-50';
+            resultsHeader.innerHTML = `
+                <div class="grid grid-cols-2 gap-6">
+                    <p class="font-medium">実際に提供されたもの</p>
+                    <p class="font-medium">あなたの予想</p>
+                </div>
+            `;
+            resultsDetails.appendChild(resultsHeader);
+            
+            // Results rows
             for (let i = 0; i < state.servingOrder.length; i++) {
                 const actualItemIndex = state.servingOrder[i];
                 const actualItem = state.items[actualItemIndex];
@@ -745,7 +904,6 @@
                     
                     <div class="grid grid-cols-2 gap-6">
                         <div>
-                            <p class="text-sm text-gray-500 mb-2">実際に提供されたもの</p>
                             <div class="flex items-center">
                                 ${actualImageHtml}
                                 <div class="ml-3">
@@ -755,12 +913,10 @@
                         </div>
                         
                         <div>
-                            <p class="text-sm text-gray-500 mb-2">あなたの予想</p>
                             <div class="flex items-center">
                                 ${guessedImageHtml}
                                 <div class="ml-3">
                                     <p class="font-medium">${guessedItem.name}</p>
-                                    <p class="text-xs text-gray-500">${state.playerGuesses[i] || 'メモなし'}</p>
                                 </div>
                             </div>
                         </div>
@@ -808,6 +964,8 @@
         // Role confirmation modal
         function renderRoleConfirmation(app, role) {
             const roleName = role === 'dealer' ? 'ディーラー' : 'プレイヤー';
+            const roleIcon = role === 'dealer' ? 'fa-user-tie' : 'fa-user';
+            const roleColor = role === 'dealer' ? 'blue' : 'green';
             
             // Clear main content
             app.innerHTML = '';
@@ -815,14 +973,16 @@
             const confirmationCard = document.createElement('div');
             confirmationCard.className = 'bg-white rounded-lg shadow-lg p-8 text-center fade-in';
             confirmationCard.innerHTML = `
-                <i class="fas ${role === 'dealer' ? 'fa-user-tie' : 'fa-user'} text-5xl text-blue-600 mb-6"></i>
+                <div class="text-${roleColor}-600 text-5xl mb-6">
+                    <i class="fas ${roleIcon}"></i>
+                </div>
                 <h2 class="text-2xl font-bold mb-4">この画面は${roleName}用です</h2>
                 <p class="text-gray-600 mb-8">あなたが${roleName}であることを確認してください。<br>役割が違う場合は「いいえ」をクリックしてください。</p>
                 <div class="grid grid-cols-2 gap-4">
                     <button id="confirmNo" class="py-3 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium transition-colors">
                         いいえ
                     </button>
-                    <button id="confirmYes" class="py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors">
+                    <button id="confirmYes" class="py-3 rounded-lg bg-${roleColor}-600 hover:bg-${roleColor}-700 text-white font-medium transition-colors">
                         はい、${roleName}です
                     </button>
                 </div>
@@ -841,10 +1001,13 @@
                     state.currentRole = 'player';
                     state.gameMode = 'playerGuess';
                 } else {
-                    state.currentRole = 'dealer';
-                    state.gameMode = 'dealerShow';
+                    // Show warning when switching to dealer
+                    showPlayerToDealerWarning(() => {
+                        state.currentRole = 'dealer';
+                        state.gameMode = 'dealerShow';
+                        renderApp();
+                    });
                 }
-                renderApp();
             });
         }
     </script>
