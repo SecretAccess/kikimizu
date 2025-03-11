@@ -2024,7 +2024,8 @@
             });
             
             function highlight() {
-                fileUpload.style.borderColor = var(--primary-color);
+                const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+                fileUpload.style.borderColor = primaryColor;
                 fileUpload.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
             }
             
